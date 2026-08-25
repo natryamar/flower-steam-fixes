@@ -1,0 +1,77 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.10"
+          - "3.13"
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install pinned Ruff
+        run: python -m pip install --disable-pip-version-check ruff==0.11.13
+
+      - name: Run Ruff
+        run: python -m ruff check .
+
+      - name: Audit current tracked tree
+        run: python tools/audit_public_tree.py
+
+      - name: Run unit tests
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Run release policy tests
+        run: >-
+          python -m unittest discover -s tests
+          -p 'test_release_packaging.py' -v
+
+      - name: Build deterministic release packages
+        run: >-
+          python tools/build_release.py
+          --component all --ref HEAD
+          --output-dir "${RUNNER_TEMP}/flower-releases"
+
+      - name: Verify tracked-tree cleanliness
+        run: |
+          git diff --exit-code -- .
+          git diff --cached --exit-code -- .
+
+  public-history:
+    name: Public history audit
+    if: github.ref == 'refs/heads/public-main' || github.event.repository.private == false
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full repository history
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+
+      - name: Audit reviewed commit history
+        run: python tools/audit_public_tree.py --history --ref "${{ github.sha }}"

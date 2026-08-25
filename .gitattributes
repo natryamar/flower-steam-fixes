@@ -1,0 +1,5 @@
+* text=auto eol=lf
+*.vdf text eol=lf
+*.dll binary
+licenses/LLVM.txt whitespace=-blank-at-eof
+licenses/MINGW-W64-RUNTIME.txt whitespace=-trailing-space,-blank-at-eof,-space-before-tab

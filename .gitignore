@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.pyright/
+.coverage
+htmlcov/
+/dist/
+/compile_commands.json
+
+# Disposable reverse-engineering workspaces
+re-temp/
+*.gpr
+*.rep/
+
+# Never commit proprietary game files or extracted media
+*.bnk
+*.bank
+*.exe
+*.dll
+*.ogg
+*.wav
+*.mp3
+*.xvag
+*.dds
+*.pssg
+*.dmp
+flower_gyro_bridge.log
+flower_input_bridge.log
+extracted/
+
+# Independently built bridge artifact; never broaden this exception.
+!gyro_bridge/dist/libScePad.dll
+
+# Installer artifacts
+*.flower-haybale-fix.original
+*.tmp

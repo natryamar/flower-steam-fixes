@@ -1,0 +1,22 @@
+LIBRARY libScePad
+EXPORTS
+    scePadClose @1
+    scePadGetControllerInformation=libScePad_original.scePadGetControllerInformation @2
+    scePadGetHandle=libScePad_original.scePadGetHandle @3
+    scePadGetJackState=libScePad_original.scePadGetJackState @4
+    scePadGetParticularMode=libScePad_original.scePadGetParticularMode @5
+    scePadInit=libScePad_original.scePadInit @6
+    scePadIsSupportedAudioFunction=libScePad_original.scePadIsSupportedAudioFunction @7
+    scePadOpen @8
+    scePadRead=libScePad_original.scePadRead @9
+    scePadReadState @10
+    scePadResetLightBar=libScePad_original.scePadResetLightBar @11
+    scePadResetOrientation=libScePad_original.scePadResetOrientation @12
+    scePadSetAngularVelocityDeadbandState=libScePad_original.scePadSetAngularVelocityDeadbandState @13
+    scePadSetAudioOutPath=libScePad_original.scePadSetAudioOutPath @14
+    scePadSetLightBar @15
+    scePadSetMotionSensorState=libScePad_original.scePadSetMotionSensorState @16
+    scePadSetParticularMode=libScePad_original.scePadSetParticularMode @17
+    scePadSetTiltCorrectionState=libScePad_original.scePadSetTiltCorrectionState @18
+    scePadSetVibration @19
+    scePadSetVolumeGain=libScePad_original.scePadSetVolumeGain @20

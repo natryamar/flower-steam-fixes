@@ -1,0 +1,76 @@
+"In Game Actions"
+{
+    "actions"
+    {
+        "flower_ps4"
+        {
+            "title"    "#Set_FlowerPS4"
+
+            "StickPadGyro"
+            {
+                "left_stick"
+                {
+                    "title"        "#Action_LeftStick"
+                    "input_mode"   "joystick_move"
+                }
+                "right_stick"
+                {
+                    "title"        "#Action_RightStick"
+                    "input_mode"   "joystick_move"
+                }
+                "tilt"
+                {
+                    "title"        "#Action_Tilt"
+                    "input_mode"   "joystick_move"
+                }
+            }
+
+            "AnalogTrigger"
+            {
+            }
+
+            "Button"
+            {
+                "dpad_up"         "#Action_DpadUp"
+                "dpad_right"      "#Action_DpadRight"
+                "dpad_down"       "#Action_DpadDown"
+                "dpad_left"       "#Action_DpadLeft"
+                "square"          "#Action_Square"
+                "cross"           "#Action_Cross"
+                "circle"          "#Action_Circle"
+                "triangle"        "#Action_Triangle"
+                "l1"              "#Action_L1"
+                "r1"              "#Action_R1"
+                "l2"              "#Action_L2"
+                "r2"              "#Action_R2"
+                "options"         "#Action_Options"
+                "touchpad_click"  "#Action_TouchpadClick"
+            }
+        }
+    }
+
+    "localization"
+    {
+        "english"
+        {
+            "Set_FlowerPS4"       "Flower Virtual PS4 Controller"
+            "Action_LeftStick"     "Left Stick"
+            "Action_RightStick"    "Right Stick"
+            "Action_Tilt"          "Controller Tilt"
+            "Action_DpadUp"        "D-Pad Up"
+            "Action_DpadRight"     "D-Pad Right"
+            "Action_DpadDown"      "D-Pad Down"
+            "Action_DpadLeft"      "D-Pad Left"
+            "Action_Square"        "Square"
+            "Action_Cross"         "Cross"
+            "Action_Circle"        "Circle"
+            "Action_Triangle"      "Triangle"
+            "Action_L1"            "L1"
+            "Action_R1"            "R1"
+            "Action_L2"            "L2"
+            "Action_R2"            "R2"
+            "Action_Options"       "Options (Start)"
+            "Action_TouchpadClick" "Touchpad Click (Select)"
+        }
+    }
+}

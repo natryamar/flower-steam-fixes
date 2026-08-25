@@ -1,0 +1,104 @@
+name: Bug report
+description: Report a reproducible problem with a supported Flower fix
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This project supports Flower Steam build `4354278` (App ID `966330`). Read [Troubleshooting](https://github.com/natryamar/flower-steam-fixes/blob/main/docs/TROUBLESHOOTING.md) first.
+
+        Report security vulnerabilities through [GitHub private vulnerability reporting](https://github.com/natryamar/flower-steam-fixes/security/advisories/new), not here. Never attach proprietary game files, controller profiles, full logs, or game-directory archives.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Affected component
+      options:
+        - Hay-bale sound fix 1.0.0
+        - Native ScePad Steam Input bridge 0.4.4
+        - Documentation or other project behavior
+    validations:
+      required: true
+
+  - type: input
+    id: versions
+    attributes:
+      label: Version and game build
+      description: Include the umbrella/component version and the Flower Steam build shown by Steam or the tool.
+      placeholder: "Umbrella 1.1.0; bridge 0.4.4; App 966330; build 4354278"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include OS/version, Steam channel, Proton version if used, and Python version. For bridge reports, include controller model/connection, Steam Input mode, selected layout type, and PadDualShock value.
+      placeholder: |
+        OS:
+        Steam channel:
+        Proton:
+        Python:
+        Controller/connection:
+        Steam Input/layout:
+        PadDualShock:
+    validations:
+      required: true
+
+  - type: textarea
+    id: status
+    attributes:
+      label: Redacted status or error output
+      description: Run the applicable status command and paste text only. Replace absolute paths, account IDs, and device IDs. Do not attach files or a full debug log.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Give the smallest repeatable sequence, including the exact command or Steam UI action.
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include only a few relevant, redacted debug lines if they materially help.
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Mention mods, a recent Steam update/verification, prior bridge generation, or manual file changes. Do not attach proprietary files, profiles, or logs.
+
+  - type: checkboxes
+    id: safety
+    attributes:
+      label: Safety and privacy checks
+      options:
+        - label: I read the troubleshooting guide and did not bypass an exact-hash or backup refusal.
+          required: true
+        - label: For install/restore problems, Flower was closed and no Steam update or verification was running.
+          required: true
+        - label: I did not attach game files, extracted assets, controller profiles, logs, crash dumps, or a game-directory archive.
+          required: true
+        - label: I redacted absolute paths and Steam/account/controller/device identifiers from pasted text.
+          required: true
+        - label: This report contains no suspected vulnerability or exploit details.
+          required: true
