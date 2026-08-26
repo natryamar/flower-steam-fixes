@@ -25,6 +25,8 @@ component versions are independent.
 - Reworked the top-level and bridge documentation around safe public downloads,
   quick start, validation limits, gyro calibration, neutral angle, and the
   correct no-output/ramp deadzone semantics.
+- Simplified user-facing install and restore quick starts to one fail-closed
+  command per operation; `status` and `--dry-run` remain optional diagnostics.
 
 ## 1.1.0 - 2026-08-24
 

@@ -48,7 +48,8 @@ Release procedure and binary provenance are documented in
   library.
 - Close Flower before installing, restoring, or editing `Flower.cfg`.
 - Do not run an installer while Steam is updating or verifying Flower.
-- Start with `status`, then run the intended write operation with `--dry-run`.
+- `install` and `restore` each perform their own full preflight and final
+  verification. `status` and `--dry-run` remain optional inspection tools.
 - Keep the downloaded archive layout intact. The bridge installer verifies the
   bundled DLL and action manifest beside its own source tree.
 - Do not use someone else's game files or replace a verified backup manually.
@@ -68,19 +69,16 @@ an installed fix, and restores only from the verified backup.
 
 ### Steam Deck / Linux
 
-From the extracted release or repository root:
+From the extracted release or repository root, install with one command:
 
 ```sh
-python3 flower_haybale_fix.py status
-python3 flower_haybale_fix.py install --dry-run
 python3 flower_haybale_fix.py install
-python3 flower_haybale_fix.py status
 ```
 
-For a nonstandard library, add:
+For a nonstandard library, use:
 
 ```sh
---game-dir "/path/to/steamapps/common/Flower"
+python3 flower_haybale_fix.py install --game-dir "/path/to/steamapps/common/Flower"
 ```
 
 ### Windows
@@ -88,21 +86,19 @@ For a nonstandard library, add:
 Extract the release, open PowerShell in that directory, and run:
 
 ```powershell
-py -3.10 flower_haybale_fix.py status
-py -3.10 flower_haybale_fix.py install --dry-run
 py -3.10 flower_haybale_fix.py install
-py -3.10 flower_haybale_fix.py status
 ```
 
-If automatic discovery does not find Flower, pass the full game directory with
-`--game-dir`.
+For a nonstandard library, use:
+
+```powershell
+py -3.10 flower_haybale_fix.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower"
+```
 
 ### Restore
 
 ```sh
-python3 flower_haybale_fix.py restore --dry-run
 python3 flower_haybale_fix.py restore
-python3 flower_haybale_fix.py status
 ```
 
 On Windows, replace `python3` with `py -3.10`. The verified backup remains at:
@@ -139,14 +135,14 @@ deletes an account-owned Steam controller layout.
 ### Install on Steam Deck / Linux
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py status
-python3 gyro_bridge/install_gyro_bridge.py install --dry-run
 python3 gyro_bridge/install_gyro_bridge.py install
-python3 gyro_bridge/install_gyro_bridge.py status
 ```
 
-For nonstandard locations, add `--game-dir "/path/to/Flower"` and
-`--steam-dir "/path/to/Steam"`.
+For nonstandard locations, use:
+
+```sh
+python3 gyro_bridge/install_gyro_bridge.py install --game-dir "/path/to/Flower" --steam-dir "/path/to/Steam"
+```
 
 ### Install on Windows
 
@@ -154,10 +150,13 @@ Extract the bridge release, close Flower, open PowerShell in the extracted
 folder, and run:
 
 ```powershell
-py -3.10 gyro_bridge/install_gyro_bridge.py status
-py -3.10 gyro_bridge/install_gyro_bridge.py install --dry-run
 py -3.10 gyro_bridge/install_gyro_bridge.py install
-py -3.10 gyro_bridge/install_gyro_bridge.py status
+```
+
+For nonstandard locations, use:
+
+```powershell
+py -3.10 gyro_bridge/install_gyro_bridge.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower" --steam-dir "C:\Program Files (x86)\Steam"
 ```
 
 Windows is documented for review and testing but is not yet a validated support
@@ -184,9 +183,7 @@ action.
 ### Restore
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py restore --dry-run
 python3 gyro_bridge/install_gyro_bridge.py restore
-python3 gyro_bridge/install_gyro_bridge.py status
 ```
 
 On Windows, replace `python3` with `py -3.10`. After a managed action manifest is

@@ -24,7 +24,8 @@ The released DLL is already built; installation does not require a compiler.
 
 - Close Flower before install, restore, or editing `Flower.cfg`.
 - Do not run the installer while Steam is updating or verifying Flower.
-- Start with `status`, then run the intended write operation with `--dry-run`.
+- `install` and `restore` perform their own full preflight and final verification;
+  `status` and `--dry-run` are optional inspection tools.
 - Never bypass an `unsupported`, `unsafe`, changed-file, backup, or artifact
   refusal.
 - Do not replace `libScePad_original.dll` manually or use someone else's game
@@ -39,29 +40,22 @@ or deleted.
 
 ## Steam Deck / Linux
 
-Extract the archive, open a terminal in its root, and run:
+Extract the archive, open a terminal in its root, and install with one command:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py status
-python3 gyro_bridge/install_gyro_bridge.py install --dry-run
 python3 gyro_bridge/install_gyro_bridge.py install
-python3 gyro_bridge/install_gyro_bridge.py status
 ```
 
 For nonstandard locations:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py status \
-  --game-dir "/path/to/steamapps/common/Flower" \
-  --steam-dir "/path/to/Steam"
+python3 gyro_bridge/install_gyro_bridge.py install --game-dir "/path/to/steamapps/common/Flower" --steam-dir "/path/to/Steam"
 ```
 
 Safe restore:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py restore --dry-run
 python3 gyro_bridge/install_gyro_bridge.py restore
-python3 gyro_bridge/install_gyro_bridge.py status
 ```
 
 ## Windows
@@ -72,26 +66,19 @@ review and testing, not as Windows certification.
 Extract the archive, close Flower, open PowerShell in the archive root, and run:
 
 ```powershell
-py -3.10 .\gyro_bridge\install_gyro_bridge.py status
-py -3.10 .\gyro_bridge\install_gyro_bridge.py install --dry-run
 py -3.10 .\gyro_bridge\install_gyro_bridge.py install
-py -3.10 .\gyro_bridge\install_gyro_bridge.py status
 ```
 
 For nonstandard locations:
 
 ```powershell
-py -3.10 .\gyro_bridge\install_gyro_bridge.py status `
-  --game-dir "D:\SteamLibrary\steamapps\common\Flower" `
-  --steam-dir "C:\Program Files (x86)\Steam"
+py -3.10 .\gyro_bridge\install_gyro_bridge.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower" --steam-dir "C:\Program Files (x86)\Steam"
 ```
 
 Safe restore:
 
 ```powershell
-py -3.10 .\gyro_bridge\install_gyro_bridge.py restore --dry-run
 py -3.10 .\gyro_bridge\install_gyro_bridge.py restore
-py -3.10 .\gyro_bridge\install_gyro_bridge.py status
 ```
 
 ## Read status safely
@@ -121,8 +108,8 @@ Fully exit and restart Steam after a managed manifest is removed.
 
 If the active DLL or backup cannot be restored safely, do not fabricate a backup.
 Stop the installer, use Steam's **Verify integrity of game files**, wait for it to
-finish, rerun `status`, and then retry `restore --dry-run` so an exact managed
-manifest can be removed. An unknown manifest is preserved.
+finish, and then run `restore` again so an exact managed manifest can be removed.
+The command rechecks both managed locations; an unknown manifest is preserved.
 
 ## Restart Steam and create/select a layout
 

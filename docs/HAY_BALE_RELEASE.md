@@ -17,7 +17,8 @@ project's [MIT License](LICENSE).
 - Close Flower before status-changing operations.
 - Let Steam finish or pause updates and file verification before running the
   script.
-- Run `status`, then `install --dry-run` or `restore --dry-run`, before any write.
+- `install` and `restore` perform their own full preflight and final verification;
+  `status` and `--dry-run` are optional inspection tools.
 - Never bypass an `unsupported`, `unsafe`, changed-file, or backup refusal.
 - Never replace the verified backup with a downloaded or borrowed game file.
 
@@ -27,28 +28,22 @@ copy, and uses atomic replacement.
 
 ## Steam Deck / Linux
 
-Extract the archive, open a terminal in its root, and check before installing:
+Extract the archive, open a terminal in its root, and install with one command:
 
 ```sh
-python3 flower_haybale_fix.py status
-python3 flower_haybale_fix.py install --dry-run
 python3 flower_haybale_fix.py install
-python3 flower_haybale_fix.py status
 ```
 
 For a nonstandard Steam library, add the Flower directory explicitly:
 
 ```sh
-python3 flower_haybale_fix.py status \
-  --game-dir "/path/to/steamapps/common/Flower"
+python3 flower_haybale_fix.py install --game-dir "/path/to/steamapps/common/Flower"
 ```
 
 Safe restore:
 
 ```sh
-python3 flower_haybale_fix.py restore --dry-run
 python3 flower_haybale_fix.py restore
-python3 flower_haybale_fix.py status
 ```
 
 ## Windows
@@ -59,28 +54,26 @@ path for careful testing; this is not a Windows support certification.
 Extract the archive, close Flower, open PowerShell in the archive root, and run:
 
 ```powershell
-py -3.10 .\flower_haybale_fix.py status
-py -3.10 .\flower_haybale_fix.py install --dry-run
 py -3.10 .\flower_haybale_fix.py install
-py -3.10 .\flower_haybale_fix.py status
 ```
 
 For a nonstandard library:
 
 ```powershell
-py -3.10 .\flower_haybale_fix.py status `
-  --game-dir "D:\SteamLibrary\steamapps\common\Flower"
+py -3.10 .\flower_haybale_fix.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower"
 ```
 
 Safe restore:
 
 ```powershell
-py -3.10 .\flower_haybale_fix.py restore --dry-run
 py -3.10 .\flower_haybale_fix.py restore
-py -3.10 .\flower_haybale_fix.py status
 ```
 
 ## Status and safe recovery
+
+The action command prints its result and verifies the final state. Use `status`
+when you want a read-only inspection, or append `--dry-run` for an optional
+preview.
 
 A healthy uninstalled bank reports `State: original`. A healthy installed fix
 reports both:

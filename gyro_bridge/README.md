@@ -17,13 +17,11 @@ byte-exact; see [Exact files and hashes](#exact-files-and-hashes).
 
 ## Quick start
 
-Close Flower. From the extracted release or repository root on SteamOS/Linux:
+Close Flower. From the extracted release or repository root on SteamOS/Linux,
+install with one command:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py status
-python3 gyro_bridge/install_gyro_bridge.py install --dry-run
 python3 gyro_bridge/install_gyro_bridge.py install
-python3 gyro_bridge/install_gyro_bridge.py status
 ```
 
 On Windows PowerShell, use `py -3.10` in place of `python3`. Native Windows is
@@ -35,8 +33,14 @@ create a **Flower Virtual PS4 Controller** layout, and follow
 [Restart Steam and select a layout](#restart-steam-and-select-a-layout). The
 installer does not create or select an account-owned layout.
 
-To remove the bridge safely, close Flower and run `restore --dry-run`, then
-`restore`, then `status`. See
+To remove the bridge safely, close Flower and run:
+
+```sh
+python3 gyro_bridge/install_gyro_bridge.py restore
+```
+
+Both action commands perform their own full preflight and final verification.
+`status` and `--dry-run` remain optional inspection tools. See
 [`docs/TROUBLESHOOTING.md`](../docs/TROUBLESHOOTING.md) for recovery states.
 
 ## Status and invariants
@@ -193,8 +197,6 @@ selection remains an explicit account-owner action in Steam's UI.
 Close Flower first. From the repository root:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py status
-python3 gyro_bridge/install_gyro_bridge.py install --dry-run
 python3 gyro_bridge/install_gyro_bridge.py install
 ```
 
@@ -205,9 +207,7 @@ into confirmed support.
 For nonstandard locations:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py install \
-  --game-dir "/path/to/steamapps/common/Flower" \
-  --steam-dir "/path/to/Steam"
+python3 gyro_bridge/install_gyro_bridge.py install --game-dir "/path/to/steamapps/common/Flower" --steam-dir "/path/to/Steam"
 ```
 
 Installation is fail-closed and reversible:
@@ -316,7 +316,6 @@ the 250 ms watchdog intentionally returns reads to the original provider.
 Close Flower, then run:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py restore --dry-run
 python3 gyro_bridge/install_gyro_bridge.py restore
 ```
 

@@ -8,7 +8,9 @@ native ScePad bridge `0.4.4`, targeting only Flower Steam build `4354278` (App I
 
 1. Close Flower before `install` or `restore` and before editing `Flower.cfg`.
 2. Do not run a project tool while Steam is updating or verifying Flower.
-3. Start with `status`, then use `--dry-run` before a write operation.
+3. `install` and `restore` perform their own full preflight and final
+   verification. Use `status` or `--dry-run` only for read-only diagnosis or an
+   optional preview.
 4. Do not delete, rename, replace, or download a substitute for a verified
    backup. Do not bypass a hash check.
 5. If a file changes during inspection, stop every updater, verifier, editor, and
@@ -30,7 +32,7 @@ Common inspection states are:
 
 | State | Meaning | Safe next step |
 |---|---|---|
-| `original` | Exact supported original | An install dry-run may proceed |
+| `original` | Exact supported original | A verified install may proceed |
 | `patched` / `bridge` | Exact current managed file | Confirm the verified original backup exists |
 | `historical-bridge` | Exact recognized prior managed bridge | Current installer may safely upgrade or restore it |
 | `missing` | Path or file was not found | Check the explicit directory and Steam library |
@@ -48,7 +50,6 @@ are verified before atomic replacement and final targets are verified afterward.
 
 ```sh
 python3 flower_haybale_fix.py status
-python3 flower_haybale_fix.py install --dry-run
 ```
 
 A healthy installed state is:
@@ -64,9 +65,7 @@ replace that backup.
 ### Safe restore
 
 ```sh
-python3 flower_haybale_fix.py restore --dry-run
 python3 flower_haybale_fix.py restore
-python3 flower_haybale_fix.py status
 ```
 
 The restore accepts only the exact patched bank plus the exact verified original
@@ -98,7 +97,6 @@ four distinct recordings are present. It does not add missing audio.
 
 ```sh
 python3 gyro_bridge/install_gyro_bridge.py status
-python3 gyro_bridge/install_gyro_bridge.py install --dry-run
 ```
 
 A healthy installed state reports:
@@ -116,8 +114,8 @@ Other important overall states:
 
 | Overall state | Meaning | Action |
 |---|---|---|
-| `original` | Official ScePad DLL is active | Install only after a passing dry-run |
-| `upgrade-available` | Recognized historical bridge plus verified backup | Current install or restore may proceed after dry-run |
+| `original` | Official ScePad DLL is active | A verified install may proceed |
+| `upgrade-available` | Recognized historical bridge plus verified backup | Current install or restore may proceed |
 | `bridge-active-without-verified-backup` | Current bridge is active but safe restore is unavailable | Do not reinstall or fabricate a backup; use the recovery steps below |
 | `historical-bridge-without-verified-backup` | Prior managed bridge is active without a verified backup | Do not upgrade; use the recovery steps below |
 | `unsupported`, `unsafe`, `changed-during-read`, or `missing` | Active DLL cannot be managed safely | Stop and identify the file/build/concurrency problem |
@@ -131,17 +129,13 @@ Account-owned controller profiles are outside the installer and remain untouched
 Close Flower, then run:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py restore --dry-run
 python3 gyro_bridge/install_gyro_bridge.py restore
-python3 gyro_bridge/install_gyro_bridge.py status
 ```
 
 For nonstandard paths:
 
 ```sh
-python3 gyro_bridge/install_gyro_bridge.py restore --dry-run \
-  --game-dir "/path/to/steamapps/common/Flower" \
-  --steam-dir "/path/to/Steam"
+python3 gyro_bridge/install_gyro_bridge.py restore --game-dir "/path/to/steamapps/common/Flower" --steam-dir "/path/to/Steam"
 ```
 
 Restore preflights both managed locations. It removes only an exact current or
@@ -164,8 +158,8 @@ or the verified original backup is missing/corrupt:
 2. Finish the failed tool operation and keep only redacted text of its output.
 3. Use Steam's **Verify integrity of game files** and wait for completion.
 4. Rerun bridge `status`.
-5. If the official DLL is now `original`, run bridge `restore --dry-run` and
-   `restore` again so an exact managed local action manifest can be removed.
+5. If the official DLL is now `original`, run bridge `restore` again so an exact
+   managed local action manifest can be removed.
 
 The restore command preserves an unknown action manifest. Never manually delete
 one unless you independently know it is yours and understand its purpose.

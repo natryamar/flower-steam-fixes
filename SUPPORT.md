@@ -44,8 +44,9 @@ supported.
    python3 gyro_bridge/install_gyro_bridge.py status
    ```
 
-4. Before any install or restore, run the same operation with `--dry-run`.
-   Never bypass a hash check or replace a backup just to make a refusal go away.
+4. The direct `install` and `restore` commands perform their own safety checks.
+   For a read-only reproduction, append `--dry-run`; never bypass a hash check or
+   replace a backup just to make a refusal go away.
 
 For nonstandard libraries, pass `--game-dir`; the bridge may also need
 `--steam-dir`. See the troubleshooting guide for exact examples and safe restore
