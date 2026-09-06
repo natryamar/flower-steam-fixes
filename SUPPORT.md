@@ -7,9 +7,13 @@ best-effort and limited to the exact compatibility target below.
 
 | Item | Current version | Support boundary |
 |---|---:|---|
-| Umbrella project | `1.1.0` | Current repository state |
-| Hay-bale sound fix | `1.0.0` | Exact supported sound bank only |
-| Native ScePad Steam Input bridge | `0.4.4` | Exact supported game files and bundled artifacts only |
+| Umbrella/bundle | `1.2.0` | [Release `v1.2.0`](https://github.com/natryamar/flower-steam-fixes/releases/tag/v1.2.0); one bundle for both fixes |
+| Hay-bale sound-fix installer | `1.0.1` | Exact supported sound bank only |
+| Native ScePad Steam Input bridge component/installer | `0.4.5` | Exact supported game files and bundled artifacts only |
+
+The release assets are `flower-steam-fixes-1.2.0.zip` and `SHA256SUMS`.
+Bridge component/installer `0.4.5` uses the unchanged native DLL and action
+manifest built for `0.4.4`, with identical exact sizes and hashes.
 
 The only supported game target is the Steam release of **Flower**, App ID
 `966330`, build `4354278`. The installers intentionally refuse unknown,
@@ -19,13 +23,15 @@ supported.
 
 ## Validation status
 
-- The hay-bale fix is gameplay-confirmed on build `4354278` under
+- Hay-bale fix `1.0.0` was gameplay-confirmed on build `4354278` under
   SteamOS/Proton: all five nighttime activations use appropriate hay sounds and
   the unrelated landing sting is gone.
 - Bridge `0.4.4` has a deterministic native smoke matrix using LLVM-MinGW,
   independent fake Steam/ScePad DLLs, and an isolated Proton prefix.
-- Informal real-device gameplay testing has exercised bridge gyro input with an
-  8BitDo controller.
+- Prior informal real-device gameplay testing exercised bridge gyro input with
+  an 8BitDo controller.
+- The bundle and installer version updates do not record new gameplay or native
+  Windows validation.
 - The bridge does **not** have broad controller, rumble, lightbar, hotplug,
   Steam-client, or hardware certification. A successful test on one device does
   not establish support for every Steam Input controller.

@@ -1,8 +1,10 @@
 # Troubleshooting
 
-These instructions apply to umbrella project `1.1.0`, hay-bale fix `1.0.0`, and
-native ScePad bridge `0.4.4`, targeting only Flower Steam build `4354278` (App ID
-`966330`). Unknown builds are intentionally unsupported.
+These instructions apply to umbrella/bundle `1.2.0` (`v1.2.0`), hay-bale
+installer `1.0.1`, and native ScePad bridge component/installer `0.4.5`, targeting
+only Flower Steam build `4354278` (App ID `966330`). The bridge DLL and action
+manifest remain unchanged native `0.4.4` artifacts with the same exact sizes and
+hashes. Unknown builds are intentionally unsupported.
 
 ## Safety rules
 
@@ -43,6 +45,12 @@ Common inspection states are:
 Low disk space, a mismatched bundled artifact, a corrupt/missing backup, or a
 file changing just before replacement also causes a refusal. Temporary copies
 are verified before atomic replacement and final targets are verified afterward.
+
+These are per-file safeguards, not an all-or-nothing transaction. An error or
+interruption can occur after a backup or managed file has changed, and bridge
+rollback can proceed only when safe. Partial state can remain. Preserve verified
+backups, read the error, and run the applicable `status` command before retrying;
+follow the recovery steps below rather than forcing an operation.
 
 ## Hay-bale sound fix
 
@@ -236,12 +244,13 @@ Disable the debug launch option after diagnosis.
 
 ## Validation limits
 
-The hay-bale behavior is gameplay-confirmed under SteamOS/Proton. Bridge `0.4.4`
-has deterministic native smoke coverage under Proton and informal real gameplay
-testing of gyro with an 8BitDo controller. That is not broad controller,
-rumble, lightbar, hotplug, or Steam-client certification. Native Windows remains
-unverified; reports are useful, but Windows behavior should not be described as
-confirmed support.
+Recorded hay-bale gameplay validation is for `1.0.0` under SteamOS/Proton.
+Bridge `0.4.4` has deterministic native smoke coverage under Proton and prior
+informal real gameplay testing of gyro with an 8BitDo controller. These records
+do not establish a new gameplay pass for bundle `1.2.0` or its updated installers,
+nor broad controller, rumble, lightbar, hotplug, or Steam-client certification.
+Native Windows remains unverified; reports are useful, but Windows behavior
+should not be described as confirmed support.
 
 If the steps above do not resolve a non-security problem, open the repository's
 bug report form. Do not upload proprietary game files, controller profiles, full

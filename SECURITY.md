@@ -2,13 +2,16 @@
 
 ## Supported versions
 
-Security fixes are considered for the current public source only:
+Security fixes are considered for the current source only:
 
 | Item | Supported version | Compatibility target |
 |---|---:|---|
-| Umbrella project | `1.1.0` | Current repository state |
-| Hay-bale sound fix | `1.0.0` | Steam build `4354278`, App `966330` |
-| Native ScePad bridge | `0.4.4` | Steam build `4354278`, App `966330` |
+| Release bundle | `1.2.0` | Current repository state |
+| Hay-bale sound fix installer | `1.0.1` | Steam build `4354278`, App `966330` |
+| Native ScePad bridge installer | `0.4.5` | Steam build `4354278`, App `966330` |
+
+The bridge installer still ships the unchanged, hash-pinned `0.4.4` native DLL
+and action manifest. Include both the bundle and installer version in reports.
 
 Historical bridge artifacts are recognized only so the current installer can
 upgrade or restore them safely. Unknown game builds and locally modified

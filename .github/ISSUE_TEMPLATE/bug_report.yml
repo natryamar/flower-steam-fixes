@@ -14,8 +14,9 @@ body:
     attributes:
       label: Affected component
       options:
-        - Hay-bale sound fix 1.0.0
-        - Native ScePad Steam Input bridge 0.4.4
+        - Hay-bale sound fix 1.0.1
+        - Native ScePad Steam Input bridge 0.4.5
+        - Release bundle or click launcher
         - Documentation or other project behavior
     validations:
       required: true
@@ -25,7 +26,7 @@ body:
     attributes:
       label: Version and game build
       description: Include the umbrella/component version and the Flower Steam build shown by Steam or the tool.
-      placeholder: "Umbrella 1.1.0; bridge 0.4.4; App 966330; build 4354278"
+      placeholder: "Bundle 1.2.0; bridge installer 0.4.5; App 966330; build 4354278"
     validations:
       required: true
 
@@ -58,7 +59,7 @@ body:
     id: reproduce
     attributes:
       label: Steps to reproduce
-      description: Give the smallest repeatable sequence, including the exact command or Steam UI action.
+      description: Give the smallest repeatable sequence, including the exact launcher, command, or Steam UI action.
       placeholder: |
         1.
         2.

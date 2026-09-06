@@ -4,9 +4,10 @@
 
 ## Component
 
-- [ ] Hay-bale sound fix `1.0.0`
-- [ ] Native ScePad bridge `0.4.4`
+- [ ] Hay-bale installer `1.0.1`
+- [ ] Native ScePad bridge component/installer `0.4.5` (unchanged `0.4.4` native artifacts)
 - [ ] Install/restore tooling
+- [ ] Release bundle `1.2.0` (`v1.2.0`) or click launchers
 - [ ] Tests
 - [ ] Documentation only
 
@@ -15,10 +16,18 @@
 <!-- Check only commands actually run. Explain skipped or unavailable checks below. -->
 
 - [ ] `python3 -m unittest discover -s tests -v`
-- [ ] `python3 gyro_bridge/build.py`
+- [ ] `python3 gyro_bridge/build.py --verify-release`
 - [ ] `python3 gyro_bridge/test.py`
+- [ ] `python3 gyro_bridge/build.py --verify-release` (again after smoke tests)
+- [ ] `python3 tools/build_release.py --ref HEAD --output-dir "<external-empty-dir>"`
 - [ ] Relevant manual test described below
 - [ ] Not applicable (documentation-only or explained below)
+
+Every bundle release includes the native DLL and requires pinned bridge
+verification and the isolated Proton smoke matrix, even with unchanged native
+artifacts. Follow [`RELEASING.md`](../RELEASING.md), including signed-tag
+packaging and manual review gates; passing CI or development packaging is not
+publication approval.
 
 ### Results and environment
 

@@ -1,6 +1,6 @@
 # Flower native ScePad Steam Input bridge
 
-- **Component version:** `0.4.4`
+- **Component / installer version:** `0.4.5`
 - **Supported game:** Flower on Steam, App ID `966330`, build `4354278`
 - **Requirement:** Python `3.10` or newer; no third-party Python packages
 
@@ -9,7 +9,9 @@ layout to Flower's native PS4-shaped ScePad path. It provides two sticks, D-pad,
 face/shoulder/menu controls, native output routing, and gravity-relative tilt
 steering without an XInput hook or raw-motion hook.
 
-Keep the extracted archive layout intact. It contains:
+This component is included in the unified `flower-steam-fixes-1.2.0.zip` bundle
+(`v1.2.0`), not in a separate component archive. Keep the extracted bundle layout
+intact. It contains:
 
 - the [installer](gyro_bridge/install_gyro_bridge.py);
 - the exact [bridge DLL](gyro_bridge/dist/libScePad.dll) and
@@ -18,7 +20,10 @@ Keep the extracted archive layout intact. It contains:
   [native source](gyro_bridge/src/flower_scepad_bridge.cpp), and
   [export definition](gyro_bridge/src/libScePad.def).
 
-The released DLL is already built; installation does not require a compiler.
+The bundled DLL is prebuilt; installation does not require a compiler.
+Component/installer `0.4.5` retains the byte-identical native DLL and action
+manifest built for `0.4.4`. Their native identity, exact sizes, and hashes are
+unchanged; the installer version does not imply a new native build.
 
 ## Safety first
 
@@ -34,51 +39,55 @@ The released DLL is already built; installation does not require a compiler.
 Installation is byte-exact and fail-closed. It verifies `Flower.exe`, the
 original ScePad DLL, `steam_api64.dll`, the bundled bridge, and the bundled action
 manifest; creates and verifies a no-clobber original backup; atomically replaces
-managed files; and coordinates rollback if the second install step fails.
-Unknown files and account-owned Steam controller layouts are never overwritten
-or deleted.
+managed files; and coordinates rollback when safe if the second install step
+fails. Unknown files and account-owned Steam controller layouts are never
+overwritten or deleted.
+
+Per-file atomic replacement is not an all-or-nothing transaction. An error,
+interruption, or unsuccessful rollback can leave partial state; preserve verified
+backups and inspect `status` before retrying.
 
 ## Steam Deck / Linux
 
-Extract the archive, open a terminal in its root, and install with one command:
+Extract the bundle and double-click
+[INSTALL_GYRO_BRIDGE_LINUX.sh](INSTALL_GYRO_BRIDGE_LINUX.sh). If your file manager
+asks what to do, choose **Run** or **Execute in Terminal**. The
+launcher opens a terminal, runs the same verified installer, and waits so you can
+read the result.
+
+To undo the fix, double-click
+[REVERT_GYRO_BRIDGE_LINUX.sh](REVERT_GYRO_BRIDGE_LINUX.sh). If an extractor
+removed executable permission, restore it once with:
+
+```sh
+chmod +x INSTALL_GYRO_BRIDGE_LINUX.sh REVERT_GYRO_BRIDGE_LINUX.sh
+```
+
+The direct commands remain available, including for nonstandard locations:
 
 ```sh
 python3 gyro_bridge/install_gyro_bridge.py install
-```
-
-For nonstandard locations:
-
-```sh
 python3 gyro_bridge/install_gyro_bridge.py install --game-dir "/path/to/steamapps/common/Flower" --steam-dir "/path/to/Steam"
-```
-
-Safe restore:
-
-```sh
 python3 gyro_bridge/install_gyro_bridge.py restore
 ```
 
 ## Windows
 
-Native Windows execution is unverified. These commands are provided for careful
+Native Windows execution is unverified. The launchers are provided for careful
 review and testing, not as Windows certification.
 
-Extract the archive, close Flower, open PowerShell in the archive root, and run:
+Extract the bundle and double-click
+[INSTALL_GYRO_BRIDGE_WINDOWS.cmd](INSTALL_GYRO_BRIDGE_WINDOWS.cmd). To undo the
+fix, double-click [REVERT_GYRO_BRIDGE_WINDOWS.cmd](REVERT_GYRO_BRIDGE_WINDOWS.cmd).
+Each window stays open so you can read the result.
+
+The direct PowerShell commands remain available, including for nonstandard
+locations:
 
 ```powershell
-py -3.10 .\gyro_bridge\install_gyro_bridge.py install
-```
-
-For nonstandard locations:
-
-```powershell
-py -3.10 .\gyro_bridge\install_gyro_bridge.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower" --steam-dir "C:\Program Files (x86)\Steam"
-```
-
-Safe restore:
-
-```powershell
-py -3.10 .\gyro_bridge\install_gyro_bridge.py restore
+py -3 .\gyro_bridge\install_gyro_bridge.py install
+py -3 .\gyro_bridge\install_gyro_bridge.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower" --steam-dir "C:\Program Files (x86)\Steam"
+py -3 .\gyro_bridge\install_gyro_bridge.py restore
 ```
 
 ## Read status safely
@@ -181,6 +190,8 @@ drift on some controller/Steam combinations.
 
 ### Installer-managed `0.4.4` artifacts
 
+Component/installer `0.4.5` manages these unchanged native `0.4.4` artifacts:
+
 | Archive file | Bytes | SHA-256 |
 |---|---:|---|
 | `gyro_bridge/dist/libScePad.dll` | 84,992 | `adca347f5f51c88907e0915b7920436a0dae96aa6ca621ece807bcd96b648f6c` |
@@ -190,16 +201,19 @@ Do not update or bypass these fingerprints to make an unknown build install.
 
 ## Validation limits
 
-The release has a deterministic LLVM-MinGW/Proton native smoke matrix using
-independent fake Steam/ScePad providers. It covers all 17 raw actions, two-slot
+Existing validation of the `0.4.4` native artifacts includes a deterministic
+LLVM-MinGW/Proton smoke matrix using independent fake Steam/ScePad providers.
+It covers all 17 raw actions, two-slot
 isolation, whole-provider fallback, ±45° conversion, reconnect ownership,
 native output routing, blocked Steam calls, stale-state recovery, and export
 surface without XInput or raw-motion dependencies.
 
-Informal real gameplay has exercised gyro with one 8BitDo controller. This is
-not broad controller, Steam-client, rumble, lightbar, hotplug, or hardware
-certification. Native Windows remains unverified. Treat devices other than the
-one informally exercised as interoperability targets, not certified hardware.
+Prior informal real gameplay exercised gyro with one 8BitDo controller. These
+records do not claim fresh gameplay validation for component/installer `0.4.5`
+or bundle `1.2.0`. This is not broad controller, Steam-client, rumble, lightbar,
+hotplug, or hardware certification. Native Windows remains unverified. Treat
+devices other than the one informally exercised as interoperability targets,
+not certified hardware.
 
 At runtime, unavailable, inactive, disconnected, or older-than-250-ms Steam
 state loses ownership of the whole slot and delegates the complete read to the

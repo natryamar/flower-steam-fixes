@@ -1,6 +1,6 @@
 # Flower hay-bale sound fix
 
-- **Component version:** `1.0.0`
+- **Component / installer version:** `1.0.1`
 - **Supported game:** Flower on Steam, App ID `966330`, build `4354278`
 - **Requirement:** Python `3.10` or newer; no third-party Python packages
 
@@ -9,8 +9,10 @@ plays an unrelated landing sting. It changes three bytes in the exact supported
 `Data/Sounds/Level4_A.bnk`, reusing a valid hay transformation sound already in
 the installation. It does not include, download, or reconstruct game audio.
 
-The archive contains the [installer source](flower_haybale_fix.py) and the
-project's [MIT License](LICENSE).
+This component is included in the unified `flower-steam-fixes-1.2.0.zip` bundle
+(`v1.2.0`), not in a separate component archive. The bundle
+contains the [installer source](flower_haybale_fix.py) and the project's
+[MIT License](LICENSE).
 
 ## Safety first
 
@@ -24,56 +26,58 @@ project's [MIT License](LICENSE).
 
 The script accepts only exact hashes, refuses linked or concurrently changing
 files, creates a verified no-clobber original backup, prepares a synced temporary
-copy, and uses atomic replacement.
+copy, and uses atomic replacement. These per-file safeguards do not guarantee
+that an error or interruption leaves no partial state. Preserve the verified
+backup and inspect `status` before retrying.
 
 ## Steam Deck / Linux
 
-Extract the archive, open a terminal in its root, and install with one command:
+Extract the bundle and double-click
+[INSTALL_HAY_BALE_LINUX.sh](INSTALL_HAY_BALE_LINUX.sh). If your file manager asks
+what to do, choose **Run** or **Execute in Terminal**. The
+launcher opens a terminal, runs the same verified installer, and waits so you can
+read the result.
+
+To undo the fix, double-click
+[REVERT_HAY_BALE_LINUX.sh](REVERT_HAY_BALE_LINUX.sh). If an extractor removed
+executable permission, restore it once with:
+
+```sh
+chmod +x INSTALL_HAY_BALE_LINUX.sh REVERT_HAY_BALE_LINUX.sh
+```
+
+The direct commands remain available, including for a nonstandard Steam library:
 
 ```sh
 python3 flower_haybale_fix.py install
-```
-
-For a nonstandard Steam library, add the Flower directory explicitly:
-
-```sh
 python3 flower_haybale_fix.py install --game-dir "/path/to/steamapps/common/Flower"
-```
-
-Safe restore:
-
-```sh
 python3 flower_haybale_fix.py restore
 ```
 
 ## Windows
 
-Native Windows use has not been verified. The script provides a Windows command
-path for careful testing; this is not a Windows support certification.
+Native Windows use has not been verified. The launchers provide a Windows path
+for careful testing; this is not a Windows support certification.
 
-Extract the archive, close Flower, open PowerShell in the archive root, and run:
+Extract the bundle and double-click
+[INSTALL_HAY_BALE_WINDOWS.cmd](INSTALL_HAY_BALE_WINDOWS.cmd). To undo the fix,
+double-click [REVERT_HAY_BALE_WINDOWS.cmd](REVERT_HAY_BALE_WINDOWS.cmd). Each
+window stays open so you can read the result.
 
-```powershell
-py -3.10 .\flower_haybale_fix.py install
-```
-
-For a nonstandard library:
-
-```powershell
-py -3.10 .\flower_haybale_fix.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower"
-```
-
-Safe restore:
+The direct PowerShell commands remain available, including for a nonstandard
+library:
 
 ```powershell
-py -3.10 .\flower_haybale_fix.py restore
+py -3 .\flower_haybale_fix.py install
+py -3 .\flower_haybale_fix.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower"
+py -3 .\flower_haybale_fix.py restore
 ```
 
 ## Status and safe recovery
 
-The action command prints its result and verifies the final state. Use `status`
-when you want a read-only inspection, or append `--dry-run` for an optional
-preview.
+A successful action verifies the final state before printing its result. Use
+`status` when you want a read-only inspection, or append `--dry-run` for an
+optional preview.
 
 A healthy uninstalled bank reports `State: original`. A healthy installed fix
 reports both:
@@ -111,11 +115,12 @@ permission to add it to the allowlist.
 
 ## Validation limits
 
-Version `1.0.0` is gameplay-confirmed on build `4354278` under SteamOS/Proton:
-all five nighttime hay-bale activations play appropriate hay transformation
-sounds and the unrelated landing sting is gone. Native Windows gameplay remains
-unverified. This project is unofficial and unaffiliated with the game's owners,
-developers, or publishers.
+Recorded gameplay validation is for version `1.0.0` on build `4354278` under
+SteamOS/Proton: all five nighttime hay-bale activations play appropriate hay
+transformation sounds and the unrelated landing sting is gone. Those results
+are historical, not a new gameplay pass for installer `1.0.1` or bundle `1.2.0`.
+Native Windows gameplay remains unverified. This project is unofficial and
+unaffiliated with the game's owners, developers, or publishers.
 
 ## Privacy and support
 

@@ -9,35 +9,52 @@ executable, DLL, audio, bank, or other game asset.
 > The installers deliberately refuse unknown or modified files. Never bypass an
 > exact-hash, backup, or safety refusal.
 
+> [!TIP]
+> **[Release v1.2.0](https://github.com/natryamar/flower-steam-fixes/releases/tag/v1.2.0)** — download the single
+> **[`flower-steam-fixes-1.2.0.zip`](https://github.com/natryamar/flower-steam-fixes/releases/download/v1.2.0/flower-steam-fixes-1.2.0.zip)** bundle and
+> [`SHA256SUMS`](https://github.com/natryamar/flower-steam-fixes/releases/download/v1.2.0/SHA256SUMS).
+> Verify and extract the ZIP, then double-click only the install or revert
+> launcher you want.
+
 ## Choose the fix you need
 
 The two components are independent. Install either one or both.
 
-| Component | Version | What it fixes or enables | Validation |
+| Component | Component / installer version | What it fixes or enables | Existing validation |
 |---|---:|---|---|
-| [Hay-bale sound fix](#hay-bale-sound-fix) | `1.0.0` | Removes the unrelated landing sting from one nighttime hay-bale activation | Gameplay-confirmed on SteamOS/Proton |
-| [Native ScePad Steam Input bridge](#native-scepad-steam-input-bridge) | `0.4.4` | Lets Steam Input controllers drive Flower's native PS4-style buttons, sticks, rumble/lightbar path, and tilt steering | Deterministic native smoke coverage plus informal real 8BitDo gyro gameplay testing; not broad hardware certification |
+| [Hay-bale sound fix](#hay-bale-sound-fix) | `1.0.1` | Removes the unrelated landing sting from one nighttime hay-bale activation | Gameplay-confirmed with `1.0.0` on SteamOS/Proton |
+| [Native ScePad Steam Input bridge](#native-scepad-steam-input-bridge) | `0.4.5` | Lets Steam Input controllers drive Flower's native PS4-style buttons, sticks, rumble/lightbar path, and tilt steering | Native `0.4.4` smoke coverage plus prior informal 8BitDo gyro gameplay testing; not broad hardware certification |
 
-See [`SUPPORT.md`](SUPPORT.md) for the exact support and validation matrix.
-Native Windows execution has not yet been verified.
+Bridge component/installer `0.4.5` retains the byte-identical DLL and action
+manifest built for `0.4.4`; their exact sizes and hashes are unchanged. The
+validation above records previous testing, not a new gameplay pass for this
+bundle. See [`SUPPORT.md`](SUPPORT.md) for the exact support and validation
+matrix. Native Windows execution has not yet been verified.
 
 ## Download and verify
 
-Use component archives from the repository's
-[GitHub Releases](https://github.com/natryamar/flower-steam-fixes/releases) page
-once a tagged release is published. Each public release must include
-`SHA256SUMS`; verify it before running an installer. Do not redistribute an ad
-hoc ZIP of a working directory or an untagged DLL from another source.
+For bundle `1.2.0` (tag [`v1.2.0`](https://github.com/natryamar/flower-steam-fixes/releases/tag/v1.2.0)),
+download the single `flower-steam-fixes-1.2.0.zip` and `SHA256SUMS` using the
+links above.
+The bundle contains both independent fixes and all Linux/Windows launchers;
+install only what you want. GitHub's automatically generated **Source code**
+archives are not the ready-to-run bundle. The extracted entry guide is
+[`BUNDLE_README.md`](BUNDLE_README.md), packaged as `README.md`, with detailed
+[`HAY_BALE_FIX.md`](HAY_BALE_FIX.md) and [`GYRO_BRIDGE.md`](GYRO_BRIDGE.md) guides.
 
-Developers and reviewers can build the same deterministic archives with:
+Verify the bundle against `SHA256SUMS` from the same release before running it.
+Do not redistribute an ad hoc ZIP of a working directory or an untagged DLL from
+another source.
+
+Developers and reviewers can build the same deterministic bundle with:
 
 ```sh
-python3 tools/build_release.py --component all --ref HEAD \
-  --output-dir /path/to/new-empty-output
+python3 tools/build_release.py --ref HEAD \
+  --output-dir "/path/to/new-empty-output"
 ```
 
 The packager reads an explicit allowlist from Git objects, excludes local
-workspace files, and writes reproducible component ZIPs plus `SHA256SUMS`.
+workspace files, and writes one reproducible ZIP plus `SHA256SUMS`.
 Release procedure and binary provenance are documented in
 [`RELEASING.md`](RELEASING.md) and
 [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md).
@@ -50,6 +67,9 @@ Release procedure and binary provenance are documented in
 - Do not run an installer while Steam is updating or verifying Flower.
 - `install` and `restore` each perform their own full preflight and final
   verification. `status` and `--dry-run` remain optional inspection tools.
+- Atomic replacement protects individual files, not the whole multi-step
+  operation. An error or interruption can leave partial state; keep verified
+  backups and inspect `status` before retrying.
 - Keep the downloaded archive layout intact. The bridge installer verifies the
   bundled DLL and action manifest beside its own source tree.
 - Do not use someone else's game files or replace a verified backup manually.
@@ -69,7 +89,8 @@ an installed fix, and restores only from the verified backup.
 
 ### Steam Deck / Linux
 
-From the extracted release or repository root, install with one command:
+Extract the bundle and double-click `INSTALL_HAY_BALE_LINUX.sh`; choose **Run**
+or **Execute in Terminal** if prompted. The direct command remains available:
 
 ```sh
 python3 flower_haybale_fix.py install
@@ -83,25 +104,29 @@ python3 flower_haybale_fix.py install --game-dir "/path/to/steamapps/common/Flow
 
 ### Windows
 
-Extract the release, open PowerShell in that directory, and run:
+Extract the bundle and double-click `INSTALL_HAY_BALE_WINDOWS.cmd`. The direct
+PowerShell command remains available:
 
 ```powershell
-py -3.10 flower_haybale_fix.py install
+py -3 flower_haybale_fix.py install
 ```
 
 For a nonstandard library, use:
 
 ```powershell
-py -3.10 flower_haybale_fix.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower"
+py -3 flower_haybale_fix.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower"
 ```
 
 ### Restore
+
+Double-click `REVERT_HAY_BALE_LINUX.sh` or `REVERT_HAY_BALE_WINDOWS.cmd` for
+your platform. The direct command is:
 
 ```sh
 python3 flower_haybale_fix.py restore
 ```
 
-On Windows, replace `python3` with `py -3.10`. The verified backup remains at:
+On Windows, replace `python3` with `py -3`. The verified backup remains at:
 
 ```text
 Data/Sounds/Level4_A.bnk.flower-haybale-fix.original
@@ -128,11 +153,16 @@ two sticks, D-pad, face/shoulder/menu controls, and a gravity-relative `tilt`
 action. It does not emulate XInput or poll Steam's raw motion API.
 
 Installation preserves and verifies Flower's original `libScePad.dll`, installs
-the exact project bridge and local action schema atomically, and coordinates
-rollback if either managed step fails. It never creates, selects, edits, or
-deletes an account-owned Steam controller layout.
+the exact project bridge and local action schema with per-file atomic
+replacement, and coordinates rollback when safe after a managed step fails. It
+never creates, selects, edits, or deletes an account-owned Steam controller
+layout.
 
 ### Install on Steam Deck / Linux
+
+Extract the bundle and double-click `INSTALL_GYRO_BRIDGE_LINUX.sh`; choose
+**Run** or **Execute in Terminal** if prompted. The direct command remains
+available:
 
 ```sh
 python3 gyro_bridge/install_gyro_bridge.py install
@@ -146,17 +176,17 @@ python3 gyro_bridge/install_gyro_bridge.py install --game-dir "/path/to/Flower" 
 
 ### Install on Windows
 
-Extract the bridge release, close Flower, open PowerShell in the extracted
-folder, and run:
+Extract the bundle and double-click `INSTALL_GYRO_BRIDGE_WINDOWS.cmd`. Native
+Windows execution remains unverified. The direct PowerShell command is:
 
 ```powershell
-py -3.10 gyro_bridge/install_gyro_bridge.py install
+py -3 gyro_bridge/install_gyro_bridge.py install
 ```
 
 For nonstandard locations, use:
 
 ```powershell
-py -3.10 gyro_bridge/install_gyro_bridge.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower" --steam-dir "C:\Program Files (x86)\Steam"
+py -3 gyro_bridge/install_gyro_bridge.py install --game-dir "D:\SteamLibrary\steamapps\common\Flower" --steam-dir "C:\Program Files (x86)\Steam"
 ```
 
 Windows is documented for review and testing but is not yet a validated support
@@ -182,11 +212,14 @@ action.
 
 ### Restore
 
+Double-click `REVERT_GYRO_BRIDGE_LINUX.sh` or
+`REVERT_GYRO_BRIDGE_WINDOWS.cmd` for your platform. The direct command is:
+
 ```sh
 python3 gyro_bridge/install_gyro_bridge.py restore
 ```
 
-On Windows, replace `python3` with `py -3.10`. After a managed action manifest is
+On Windows, replace `python3` with `py -3`. After a managed action manifest is
 removed, fully exit and restart Steam. Restore leaves account-owned layouts and
 `Flower.cfg` unchanged.
 
@@ -207,7 +240,7 @@ python3 -m unittest discover -s tests -v
 python3 gyro_bridge/build.py --write-compile-commands  # local clangd/Zed metadata
 python3 gyro_bridge/build.py --verify-release
 python3 gyro_bridge/test.py
-python3 tools/build_release.py --component all --ref HEAD \
+python3 tools/build_release.py --ref HEAD \
   --output-dir /tmp/flower-releases
 ```
 

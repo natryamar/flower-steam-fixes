@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build deterministic, policy-checked public release archives."""
+"""Build the deterministic, policy-checked public release bundle."""
 
 from __future__ import annotations
 
@@ -19,10 +19,11 @@ from typing import cast
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 FIXED_ZIP_TIMESTAMP = (1980, 1, 1, 0, 0, 0)
 REGULAR_FILE_MODE = stat.S_IFREG | 0o644
+EXECUTABLE_FILE_MODE = stat.S_IFREG | 0o755
 
-HAY_BALE_VERSION = "1.0.0"
-BRIDGE_VERSION = "0.4.4"
-COMPONENTS = ("hay-bale", "bridge", "all")
+BUNDLE_VERSION = "1.2.0"
+# Preserve --component all for older automation, but refuse component-only requests.
+COMPONENTS = ("all",)
 
 
 class ReleasePolicyError(RuntimeError):
@@ -60,24 +61,25 @@ class BuiltArchive:
     sha256: str
 
 
-HAY_BALE_RELEASE = ReleaseSpec(
-    component="hay-bale",
-    slug="flower-hay-bale-fix",
-    version=HAY_BALE_VERSION,
+BUNDLE_RELEASE = ReleaseSpec(
+    component="all",
+    slug="flower-steam-fixes",
+    version=BUNDLE_VERSION,
     members=(
+        ReleaseMember("GYRO_BRIDGE.md", "GYRO_BRIDGE.md"),
+        ReleaseMember("HAY_BALE_FIX.md", "HAY_BALE_FIX.md"),
+        ReleaseMember("INSTALL_GYRO_BRIDGE_LINUX.sh", "INSTALL_GYRO_BRIDGE_LINUX.sh"),
+        ReleaseMember("INSTALL_GYRO_BRIDGE_WINDOWS.cmd", "INSTALL_GYRO_BRIDGE_WINDOWS.cmd"),
+        ReleaseMember("INSTALL_HAY_BALE_LINUX.sh", "INSTALL_HAY_BALE_LINUX.sh"),
+        ReleaseMember("INSTALL_HAY_BALE_WINDOWS.cmd", "INSTALL_HAY_BALE_WINDOWS.cmd"),
         ReleaseMember("LICENSE", "LICENSE"),
-        ReleaseMember("README.md", "docs/HAY_BALE_RELEASE.md"),
-        ReleaseMember("flower_haybale_fix.py", "flower_haybale_fix.py"),
-    ),
-)
-BRIDGE_RELEASE = ReleaseSpec(
-    component="bridge",
-    slug="flower-native-scepad-bridge",
-    version=BRIDGE_VERSION,
-    members=(
-        ReleaseMember("LICENSE", "LICENSE"),
-        ReleaseMember("README.md", "docs/BRIDGE_RELEASE.md"),
+        ReleaseMember("README.md", "BUNDLE_README.md"),
+        ReleaseMember("REVERT_GYRO_BRIDGE_LINUX.sh", "REVERT_GYRO_BRIDGE_LINUX.sh"),
+        ReleaseMember("REVERT_GYRO_BRIDGE_WINDOWS.cmd", "REVERT_GYRO_BRIDGE_WINDOWS.cmd"),
+        ReleaseMember("REVERT_HAY_BALE_LINUX.sh", "REVERT_HAY_BALE_LINUX.sh"),
+        ReleaseMember("REVERT_HAY_BALE_WINDOWS.cmd", "REVERT_HAY_BALE_WINDOWS.cmd"),
         ReleaseMember("THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.md"),
+        ReleaseMember("flower_haybale_fix.py", "flower_haybale_fix.py"),
         ReleaseMember("gyro_bridge/build.py", "gyro_bridge/build.py"),
         ReleaseMember(
             "gyro_bridge/dist/libScePad.dll",
@@ -106,10 +108,7 @@ BRIDGE_RELEASE = ReleaseSpec(
         ),
     ),
 )
-RELEASES = (
-    HAY_BALE_RELEASE,
-    BRIDGE_RELEASE,
-)
+RELEASES = (BUNDLE_RELEASE,)
 
 PINNED_RELEASE_INPUTS = (
     PinnedFile(
@@ -132,10 +131,12 @@ ALLOWED_BINARY_SOURCE_FILES = frozenset(
 ALLOWED_BINARY_ARCHIVE_FILES = ALLOWED_BINARY_SOURCE_FILES
 ALLOWED_TEXT_SUFFIXES = frozenset(
     {
+        ".cmd",
         ".cpp",
         ".def",
         ".md",
         ".py",
+        ".sh",
         ".txt",
         ".vdf",
     }
@@ -419,12 +420,9 @@ def _validate_pinned_inputs(committed_files: dict[str, bytes]) -> None:
 
 
 def _select_releases(component: str) -> tuple[ReleaseSpec, ...]:
-    if component == "all":
-        return RELEASES
-    selected = tuple(release for release in RELEASES if release.component == component)
-    if not selected:
+    if component not in COMPONENTS:
         raise ReleasePolicyError(f"unknown release component: {component}")
-    return selected
+    return RELEASES
 
 
 def _release_members(
@@ -445,7 +443,12 @@ def _zip_info(path: str) -> zipfile.ZipInfo:
     info.extract_version = 20
     info.flag_bits = 0
     info.internal_attr = 0
-    info.external_attr = REGULAR_FILE_MODE << 16
+    mode = (
+        EXECUTABLE_FILE_MODE
+        if PurePosixPath(path).suffix.casefold() == ".sh"
+        else REGULAR_FILE_MODE
+    )
+    info.external_attr = mode << 16
     info.extra = b""
     info.comment = b""
     return info
@@ -504,11 +507,11 @@ def _prepare_output_directory(project_root: Path, output_dir: Path) -> Path:
 def build_releases(
     output_dir: Path,
     *,
-    component: str,
+    component: str = "all",
     ref: str = "HEAD",
     project_root: Path = PROJECT_ROOT,
 ) -> tuple[BuiltArchive, ...]:
-    """Build selected public release ZIPs and a matching SHA-256 manifest."""
+    """Build the public bundle ZIP and its matching SHA-256 manifest."""
     _validate_release_specs()
     selected_releases = _select_releases(component)
     project_root, commit = resolve_release_commit(project_root, ref)
@@ -585,8 +588,8 @@ def _parse_args(arguments: Sequence[str] | None) -> CommandLineOptions:
     _ = parser.add_argument(
         "--component",
         choices=COMPONENTS,
-        required=True,
-        help="release component to package",
+        default="all",
+        help=argparse.SUPPRESS,
     )
     _ = parser.add_argument(
         "--ref",

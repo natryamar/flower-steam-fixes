@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
+from unittest import mock
 
+import flower_haybale_fix as installer
 from flower_haybale_fix import (
     BACKUP_SUFFIX,
     PatchError,
@@ -166,6 +170,42 @@ class FlowerHayBaleFixTests(unittest.TestCase):
     def test_explicit_game_directory_resolution(self) -> None:
         self.assertEqual(resolve_target(self.game), self.target)
         self.assertEqual(resolve_target(self.target), self.target)
+
+    def test_main_prints_concise_operation_results(self) -> None:
+        cases = (
+            (["install"], "install_patch", "Success.\n", False),
+            (["restore"], "restore_patch", "Fix reverted.\n", False),
+            (
+                ["install", "--dry-run"],
+                "install_patch",
+                "Dry run successful; no changes made.\n",
+                True,
+            ),
+            (
+                ["restore", "--dry-run"],
+                "restore_patch",
+                "Dry run successful; no changes made.\n",
+                True,
+            ),
+        )
+
+        for argv, operation_name, expected_output, dry_run in cases:
+            with self.subTest(argv=argv):
+                output = io.StringIO()
+                with (
+                    mock.patch.object(
+                        installer,
+                        "resolve_target",
+                        return_value=self.target,
+                    ),
+                    mock.patch.object(installer, operation_name) as operation,
+                    redirect_stdout(output),
+                ):
+                    exit_code = installer.main(argv)
+
+                self.assertEqual(exit_code, 0)
+                self.assertEqual(output.getvalue(), expected_output)
+                operation.assert_called_once_with(self.target, dry_run=dry_run)
 
 
 if __name__ == "__main__":

@@ -7,9 +7,13 @@ for users who provide their own legitimate Steam installation of Flower.
 
 The current project contains:
 
-- umbrella project `1.1.0`;
-- hay-bale fix `1.0.0`; and
-- native ScePad Steam Input bridge `0.4.4`.
+- umbrella/bundle `1.2.0` (tag `v1.2.0`);
+- hay-bale installer `1.0.1`; and
+- native ScePad Steam Input bridge component/installer `0.4.5`.
+
+The bridge DLL and action manifest remain byte-identical `0.4.4` native
+artifacts. Installer-only version changes must not relabel those artifacts or
+change their exact size/hash fingerprints.
 
 Compatibility is byte-exact for Steam build `4354278` (App ID `966330`). Do not
 relax an allowlist, add a force flag, or treat a new hash as compatible without a
@@ -17,13 +21,17 @@ separately justified and tested release update.
 
 Keep these safety properties intact:
 
-- install and restore remain explicit, hash-gated, atomic, and reversible;
+- install and restore remain explicit and hash-gated, with per-file atomic
+  replacement, final verification, and rollback when safe and applicable;
 - verified original backups are never silently replaced;
 - unknown, linked, or concurrently changing files are refused;
 - Steam controller profiles are never created, selected, edited, or deleted;
 - Steam-owned and original ScePad fields are never blended; and
 - unavailable or stale Steam state returns the complete read to the original
   provider.
+
+These safeguards do not guarantee an error or interruption leaves no partial
+state. Preserve verified backups and safe recovery paths.
 
 ## Prohibited content
 
@@ -73,18 +81,25 @@ The repository currently has these test suites and entry points:
 |---|---|---|
 | `tests/test_flower_haybale_fix.py` | `python3 -m unittest discover -s tests -v` | Hay-bale install/restore, dry-run, backup verification, idempotency, unknown-file and link refusal |
 | `tests/test_gyro_bridge_installer.py` | `python3 -m unittest discover -s tests -v` | Bridge/action-manifest install, upgrade, rollback, restore, exact signatures, races/links, and preservation of unmanaged files |
-| `tests/test_release_packaging.py` | `python3 -m unittest discover -s tests -v` | Explicit archive allowlists, Git-object provenance, deterministic ZIPs/checksums, and proprietary-file rejection |
+| `tests/test_click_launchers.py` | `python3 -m unittest discover -s tests -v` | Linux launcher execution/error propagation and static Windows launcher delegation checks, not native Windows execution |
+| `tests/test_release_packaging.py` | `python3 -m unittest discover -s tests -v` | Single-bundle allowlist, Git-object provenance, deterministic ZIP/checksum output, and proprietary-file rejection |
 | Native editor configuration | `python3 gyro_bridge/build.py --write-compile-commands` | Generates ignored local clangd metadata using the real Windows cross-target and headers |
 | Native bridge release build | `python3 gyro_bridge/build.py --verify-release` | Requires the pinned LLVM-MinGW identity and reproduces the exact production DLL hash |
 | `gyro_bridge/tests/native_scepad_smoke.cpp` | `python3 gyro_bridge/test.py` | Deterministic fake Steam/ScePad matrix under an isolated Proton prefix, including raw controls, two slots, whole-provider fallback, tilt conversion, native outputs, blocked calls, recovery, and export surface |
 | Public tree/history audit | `python3 tools/audit_public_tree.py --history` | Rejects prohibited tracked artifacts, known private handoff history, user paths/account-scoped data, and common credential forms without printing matches |
-| Public release packaging | `python3 tools/build_release.py --component all --ref HEAD --output-dir /tmp/flower-releases` | From a clean checkout, builds component archives from explicit commit-object allowlists and emits `SHA256SUMS` |
+| Public release packaging | `python3 tools/build_release.py --ref HEAD --output-dir /tmp/flower-releases` | From a clean checkout, builds the single bundle from an explicit commit-object allowlist and emits `SHA256SUMS` |
 | Python lint | `python3 -m ruff check .` | Runs the pinned CI lint policy; CI installs Ruff `0.11.13` |
 
 `gyro_bridge/test.py` rebuilds the bridge before running the native smoke test.
 Run every check relevant to the files changed and report the exact commands and
 results in the pull request. If a native prerequisite is unavailable, say so;
 do not describe an unrun check as passing.
+
+Every release bundle includes the native DLL, so pinned `--verify-release`
+checks and the isolated Proton smoke matrix are mandatory even when only
+installers, launchers, or docs changed. Follow all gates in
+[`RELEASING.md`](RELEASING.md); development packaging with `--ref HEAD` or
+passing CI is not publication approval.
 
 Automated native smoke coverage is not hardware certification. Informal gameplay
 has exercised gyro with a real 8BitDo controller, but broad controller, rumble,
@@ -98,8 +113,9 @@ platform and scope without generalizing beyond what was tested.
    safety changes, or native architecture changes.
 2. Keep the patch focused and follow the existing Python/C++ style.
 3. Add or update synthetic tests for behavior changes.
-4. Update the relevant README, architecture/action contract, troubleshooting,
-   and changelog text when public behavior or compatibility changes.
+4. Update the relevant README, root bundle/component guides, architecture/action
+   contract, troubleshooting, and changelog text when public behavior or
+   compatibility changes.
 5. Inspect the diff for generated files, proprietary content, profiles, logs,
    absolute paths, and account/device IDs.
 6. Open a pull request using the repository template.

@@ -1,7 +1,7 @@
 # Repository metadata only; the scripts are run directly and this is not a pip package.
 [project]
 name = "flower-steam-fixes"
-version = "1.1.0"
+version = "1.2.0"
 description = "Reversible Flower audio fix and native ScePad Steam Input bridge"
 readme = "README.md"
 requires-python = ">=3.10"

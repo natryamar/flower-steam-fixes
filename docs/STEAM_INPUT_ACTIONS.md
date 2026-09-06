@@ -197,8 +197,10 @@ Steamworks publisher access, this project cannot publish an Official or
 Recommended layout, auto-select a layout for any controller family, or change
 App ID controller settings through Steamworks.
 
-Installation and restoration must remain explicit and reversible. The installer
-hash-gates every managed file, preserves a verified
-`libScePad_original.dll`, and removes only an exact project-managed schema on
-restore. Exact game, current `0.4.4` proxy/action-file, and historical managed
+Installation and restoration must remain explicit and reversible. Bridge
+component/installer `0.4.5` in bundle `1.2.0` hash-gates every managed file,
+preserves a verified `libScePad_original.dll`, and removes only an exact
+project-managed schema on restore. The native proxy and action file remain the
+unchanged `0.4.4` artifacts; the installer version does not change their exact
+sizes or hashes. Exact game, current native-artifact, and historical managed
 hashes are listed in [`gyro_bridge/README.md`](../gyro_bridge/README.md).

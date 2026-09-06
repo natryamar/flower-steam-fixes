@@ -70,7 +70,7 @@ class PublicAuditUnitTests(unittest.TestCase):
     def test_ref_requires_history(self) -> None:
         stderr = io.StringIO()
         with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
-            audit_public_tree.main(["--ref", "HEAD"])
+            _ = audit_public_tree.main(["--ref", "HEAD"])
 
         self.assertEqual(raised.exception.code, 2)
         self.assertIn("--ref requires --history", stderr.getvalue())

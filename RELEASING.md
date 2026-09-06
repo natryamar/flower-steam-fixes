@@ -3,49 +3,60 @@
 Releases are produced from immutable Git tags in a fresh checkout. Never package
 from a developer's ordinary working directory.
 
-## Independent component versions and tags
+## Bundle and component versions
 
-The repository contains two independently versioned deliverables:
+This procedure covers bundle `1.2.0` (tag `v1.2.0`), dated `2026-09-06`.
+The release must provide one bundle containing both independently selectable
+components:
 
-| Component | Current version source | Tag format | Tag for this version |
-|---|---|---|---|
-| Hay-bale sound fix | `flower_haybale_fix.py` `SCRIPT_VERSION` (`1.0.0`) | `haybale-vMAJOR.MINOR.PATCH` | `haybale-v1.0.0` |
-| Native ScePad gyro bridge | `gyro_bridge/install_gyro_bridge.py` `SCRIPT_VERSION` (`0.4.4`) | `gyro-bridge-vMAJOR.MINOR.PATCH` | `gyro-bridge-v0.4.4` |
+| Item | Release version source | Version | Tag for this bundle |
+|---|---|---:|---|
+| Combined release bundle | `pyproject.toml` and `tools/build_release.py` `BUNDLE_VERSION` | `1.2.0` | `v1.2.0` |
+| Hay-bale sound-fix installer | `flower_haybale_fix.py` `SCRIPT_VERSION` | `1.0.1` | Included in the bundle tag |
+| Native ScePad gyro bridge component/installer | `gyro_bridge/install_gyro_bridge.py` `SCRIPT_VERSION` | `0.4.5` | Included in the bundle tag |
 
-These tag names are created only when those versions are released. The version
-in `pyproject.toml` is repository/package metadata; it is not a substitute for
-either component version. A commit may carry both component tags
-when both are released, but one component must not be renumbered merely because
-the other changed.
+Component versions still describe their own compatibility and behavior, but new
+GitHub releases use one umbrella `vMAJOR.MINOR.PATCH` tag and one ready-to-run
+bundle. Historical component tags remain historical and must not be moved.
+
+Bridge `0.4.5` is a component/installer version, not a new native build. This
+bundle reuses the DLL and action manifest built for `0.4.4` byte-for-byte, with
+the unchanged sizes and hashes documented in [`GYRO_BRIDGE.md`](GYRO_BRIDGE.md).
+Do not relabel the native artifacts or change their expected hashes for an
+installer-only version bump.
 
 Before tagging:
 
-1. Update the changed component's version and all matching documentation.
-2. For a bridge change, rebuild the DLL, update the installer's exact size/hash
-   allowlist, and update tests and documented artifact hashes together.
+1. Update the bundle version in `pyproject.toml`, `tools/build_release.py`, and all
+   matching documentation. Update an individual component version when that
+   component's behavior or compatibility changed.
+2. For a native-runtime or action-schema change, rebuild or update the affected
+   artifacts and review the exact size/hash allowlists, tests, and documented
+   fingerprints together. Installer-only changes must preserve unchanged native
+   artifacts; `0.4.5` retains the `0.4.4` fingerprints.
 3. Review the complete diff and make the release commit.
-4. Create an annotated, signed tag using the component's tag format. Tags are
-   immutable; correct a release with a new version rather than moving a tag.
+4. Create the annotated, signed umbrella tag `v1.2.0`. Tags are immutable;
+   correct a release with a new version rather than moving a tag.
 
 ## Release roles and record
 
 One named **release packager** owns each release build. Record the packager's
 name or account in the release notes. The packager must perform the clean
-checkout, toolchain verification, tests, package/source-archive creation,
-checksum creation, and upload as one traceable release run; do not combine artifacts
+checkout, toolchain verification, tests, bundle creation, checksum verification,
+and upload as one traceable release run; do not combine artifacts
 built by different people or from different checkouts.
 
 Retain a transcript containing:
 
-- component version, signed tag, and full commit ID;
+- bundle and included component versions, signed tag, and full commit ID;
 - release packager identity and build host/OS;
 - llvm-mingw release, archive URL, and verified archive SHA-256;
 - complete `clang --version` output;
 - production DLL SHA-256 and PE import list;
 - every required test command and result;
-- final archive names and `SHA256SUMS`.
+- final bundle name and `SHA256SUMS`.
 
-A second maintainer should compare the transcript and downloaded assets against
+A second maintainer must compare the transcript and downloaded assets against
 the tag before the draft release is made public.
 
 ## First-public-release history sanitation gate
@@ -88,11 +99,11 @@ fresh clone from the canonical repository, not a worktree containing local
 builds:
 
 ```sh
-git clone --no-local <canonical-repository-url> flower-fix-release
+git clone --no-local https://github.com/natryamar/flower-steam-fixes.git flower-fix-release
 cd flower-fix-release
 git fetch --force --tags
-git verify-tag <component-tag>
-git checkout --detach <component-tag>
+git verify-tag v1.2.0
+git checkout --detach v1.2.0
 git status --porcelain=v1 --untracked-files=all
 ```
 
@@ -102,7 +113,8 @@ developer checkout into this clone.
 
 ## Pinned llvm-mingw toolchain
 
-Bridge release builds use exactly:
+Every bundle includes the bridge DLL and must verify it with this pinned
+toolchain, even when the native artifacts are unchanged:
 
 - release: `20260616`;
 - archive: `llvm-mingw-20260616-ucrt-ubuntu-22.04-x86_64.tar.xz`;
@@ -149,16 +161,18 @@ cmp licenses/MINGW-W64-RUNTIME.txt \
 
 ## Required validation
 
-Run all Python tests for every component release:
+Run all Python tests for every bundle release:
 
 ```sh
 python3 -m unittest discover -s tests -v
 ```
 
-For every bridge release, also run the pinned release build and the isolated
-Proton smoke matrix. Record the Proton version/path used by the smoke test.
-`gyro_bridge/test.py` invokes the default `build.py` interface, so this also
-guards compatibility between the two scripts.
+For every bundle release, also run the pinned bridge release build and the
+isolated Proton smoke matrix. The bundle always includes the DLL, so these
+checks are mandatory even for installer-only, launcher-only, or documentation-only
+changes with unchanged native artifacts. Record the Proton version/path used by
+the smoke test. `gyro_bridge/test.py` invokes the default `build.py` interface,
+so this also guards compatibility between the two scripts.
 
 ```sh
 python3 gyro_bridge/build.py --verify-release
@@ -173,75 +187,63 @@ smoke checks and inspect the PE import list:
 ```sh
 objdump -p gyro_bridge/dist/libScePad.dll | grep 'DLL Name'
 sha256sum gyro_bridge/dist/libScePad.dll
-git diff --exit-code
-git diff --cached --exit-code
+git --no-pager diff --exit-code
+git --no-pager diff --cached --exit-code
 git status --porcelain=v1 --untracked-files=all
 ```
 
 Only ignored files under `re-temp/` may have been created. There must be no
 tracked diff after the deterministic rebuild. Hardware/gameplay claims still
 require the real Steam client, supported Flower build, and physical-controller
-checks described in `gyro_bridge/README.md`; do not turn the isolated smoke test
-into a hardware-certification claim.
+checks described in [`gyro_bridge/README.md`](gyro_bridge/README.md); do not turn
+the isolated smoke test into a hardware-certification claim. Record unrun checks
+explicitly; prior validation does not establish a new gameplay or native Windows
+pass for `v1.2.0`.
 
 ## Release packaging
 
-Each independently tagged release contains only its applicable component ZIP,
-its deterministic tag-derived source ZIP, and a final `SHA256SUMS` covering
-exactly those two archives. Never combine both components in one output
-directory or checksum manifest.
+Each umbrella-tagged GitHub release must have one intended user download:
+`flower-steam-fixes-1.2.0.zip` for this release. The only additional uploaded asset is
+`SHA256SUMS`. GitHub supplies its own automatically generated source archives;
+do not build or upload another source ZIP that could be mistaken for the
+ready-to-run bundle.
 
 Run the hardened packager from the clean, detached checkout used for validation:
 
-```text
-python3 tools/build_release.py --component hay-bale|bridge \
-  --ref <verified-tag> --output-dir <new-external-empty-dir>
+```sh
+python3 tools/build_release.py \
+  --ref v1.2.0 \
+  --output-dir "<new-external-empty-dir>"
 ```
 
-The literal `--ref` must be the verified component tag and must resolve to the
+The literal `--ref` must be the verified umbrella tag and must resolve to the
 currently checked-out `HEAD`. The packager must refuse a different ref, a dirty
 checkout (including staged, unstaged, or untracked changes), and an output path
-inside the checkout. `<new-external-empty-dir>` must be outside the checkout and
-must either not exist or be an empty real directory; never reuse a prior release
-directory.
+inside the checkout. Replace the quoted `<new-external-empty-dir>` placeholder
+with a path outside the checkout. It must either not exist or be an empty real
+directory; never reuse a prior release directory.
 
-Run only the command for the component being released:
+The result must be exactly `flower-steam-fixes-1.2.0.zip` and `SHA256SUMS`. Do not
+rename or post-process the bundle.
 
-```sh
-python3 tools/build_release.py \
-  --component hay-bale \
-  --ref haybale-v1.0.0 \
-  --output-dir <new-external-empty-dir>
-```
-
-or:
-
-```sh
-python3 tools/build_release.py \
-  --component bridge \
-  --ref gyro-bridge-v0.4.4 \
-  --output-dir <new-external-empty-dir>
-```
-
-The result is only `flower-hay-bale-fix-1.0.0.zip` for the hay-bale tag or only
-`flower-native-scepad-bridge-0.4.4.zip` for the bridge tag, plus the packager's
-initial one-archive `SHA256SUMS`. Do not rename or post-process the component ZIP.
-
-### `flower-hay-bale-fix-1.0.0.zip` exact standalone members
+### `flower-steam-fixes-1.2.0.zip` exact members
 
 | Tracked source | ZIP member |
 |---|---|
+| `GYRO_BRIDGE.md` | `GYRO_BRIDGE.md` |
+| `HAY_BALE_FIX.md` | `HAY_BALE_FIX.md` |
+| `INSTALL_GYRO_BRIDGE_LINUX.sh` | `INSTALL_GYRO_BRIDGE_LINUX.sh` |
+| `INSTALL_GYRO_BRIDGE_WINDOWS.cmd` | `INSTALL_GYRO_BRIDGE_WINDOWS.cmd` |
+| `INSTALL_HAY_BALE_LINUX.sh` | `INSTALL_HAY_BALE_LINUX.sh` |
+| `INSTALL_HAY_BALE_WINDOWS.cmd` | `INSTALL_HAY_BALE_WINDOWS.cmd` |
 | `LICENSE` | `LICENSE` |
-| `docs/HAY_BALE_RELEASE.md` | `README.md` |
-| `flower_haybale_fix.py` | `flower_haybale_fix.py` |
-
-### `flower-native-scepad-bridge-0.4.4.zip` exact standalone members
-
-| Tracked source | ZIP member |
-|---|---|
-| `LICENSE` | `LICENSE` |
-| `docs/BRIDGE_RELEASE.md` | `README.md` |
+| `BUNDLE_README.md` | `README.md` |
+| `REVERT_GYRO_BRIDGE_LINUX.sh` | `REVERT_GYRO_BRIDGE_LINUX.sh` |
+| `REVERT_GYRO_BRIDGE_WINDOWS.cmd` | `REVERT_GYRO_BRIDGE_WINDOWS.cmd` |
+| `REVERT_HAY_BALE_LINUX.sh` | `REVERT_HAY_BALE_LINUX.sh` |
+| `REVERT_HAY_BALE_WINDOWS.cmd` | `REVERT_HAY_BALE_WINDOWS.cmd` |
 | `THIRD_PARTY_NOTICES.md` | `THIRD_PARTY_NOTICES.md` |
+| `flower_haybale_fix.py` | `flower_haybale_fix.py` |
 | `gyro_bridge/build.py` | `gyro_bridge/build.py` |
 | `gyro_bridge/dist/libScePad.dll` | `gyro_bridge/dist/libScePad.dll` |
 | `gyro_bridge/install_gyro_bridge.py` | `gyro_bridge/install_gyro_bridge.py` |
@@ -251,86 +253,52 @@ initial one-archive `SHA256SUMS`. Do not rename or post-process the component ZI
 | `licenses/LLVM.txt` | `licenses/LLVM.txt` |
 | `licenses/MINGW-W64-RUNTIME.txt` | `licenses/MINGW-W64-RUNTIME.txt` |
 
-Each component-specific release guide is deliberately aliased to the package
-root as `README.md`. The bridge retains its repository-relative `gyro_bridge/`
-layout because the installer resolves its bundled DLL and manifest from those
-paths. Native source and build inputs preserve binary provenance.
-`THIRD_PARTY_NOTICES.md` and both license files are tracked, byte-exact release
-inputs. Every unlisted member is forbidden.
-
-### Exact deterministic source archives
-
-Create exactly one source archive from the same verified tag, directly from Git
-objects and into the component's external output directory. For the hay-bale
-release, run from the clean checkout:
-
-```sh
-git archive --format=zip \
-  --prefix=flower-hay-bale-fix-1.0.0-source/ \
-  --output="<new-external-empty-dir>/flower-hay-bale-fix-1.0.0-source.zip" \
-  haybale-v1.0.0
-```
-
-For the bridge release, run:
-
-```sh
-git archive --format=zip \
-  --prefix=flower-native-scepad-bridge-0.4.4-source/ \
-  --output="<new-external-empty-dir>/flower-native-scepad-bridge-0.4.4-source.zip" \
-  gyro-bridge-v0.4.4
-```
-
-The fixed top-level prefixes and filenames are part of the release contract. Do
-not use a branch, raw commit argument, copied checkout, staging tree, file-browser
-archive, or working-directory ZIP as the source archive.
+All payloads keep their repository-relative paths; the sole alias is
+`BUNDLE_README.md` to the ZIP's root `README.md`. The repository's top-level
+`README.md` is not packaged. Component guides and launchers live at the root in
+both the repository and bundle. Linux launchers carry mode `0755`; all other
+text files carry mode `0644`. The bridge retains its repository-relative
+`gyro_bridge/` layout because the installer resolves its DLL and manifest there.
+Every unlisted member is forbidden.
 
 ### No working-directory archives
 
 Never run `zip -r` on `.`, the repository root, or any developer working
-directory. `tools/build_release.py` is the sole component-package builder, and
-`git archive` with the exact verified tag is the sole source-package builder.
-Both must write only to `<new-external-empty-dir>` outside the checkout. `.git`,
-`re-temp`, the toolchain, caches, test binaries, logs, and every unlisted file
-must remain outside the component ZIP.
+directory. `tools/build_release.py` is the sole bundle builder and must write only
+to `<new-external-empty-dir>` outside the checkout. `.git`, `re-temp`, the
+toolchain, caches, test binaries, logs, and every unlisted file must remain
+outside the bundle.
 
 ## Checksums and publication
 
-The exact source command adds a second ZIP after the packager writes its initial
-manifest. From inside `<new-external-empty-dir>`, replace that manifest with the
-component's final two-archive manifest and verify it.
-
-For the hay-bale release:
+The packager writes the final one-bundle checksum manifest. Verify it from inside
+`<new-external-empty-dir>`:
 
 ```sh
-sha256sum \
-  flower-hay-bale-fix-1.0.0.zip \
-  flower-hay-bale-fix-1.0.0-source.zip \
-  > SHA256SUMS
 sha256sum --check --strict SHA256SUMS
 ```
 
-For the bridge release:
+The final output directory and uploaded release assets must contain exactly:
 
-```sh
-sha256sum \
-  flower-native-scepad-bridge-0.4.4.zip \
-  flower-native-scepad-bridge-0.4.4-source.zip \
-  > SHA256SUMS
-sha256sum --check --strict SHA256SUMS
-```
+- `flower-steam-fixes-1.2.0.zip`
+- `SHA256SUMS`
 
-The final output directory and release upload must contain exactly the applicable
-component ZIP, its source ZIP, and this final `SHA256SUMS`; no archive or checksum
-for the other component belongs in that independently tagged release.
+Upload those two files to a draft release for the matching umbrella tag. In the
+GitHub release notes, identify `flower-steam-fixes-1.2.0.zip` as the only
+ready-to-run download and explain that GitHub's **Source code** links are not the
+installer bundle.
 
-Upload those three files to a draft release for the matching component tag.
-Release notes must include the full commit ID, release packager, pinned toolchain
-identity, production DLL hash (for a bridge release), validation results, and
-any manual-test limitations.
+Release notes must also include the full commit ID, release packager, pinned
+toolchain identity, production DLL hash, validation results, and manual-test
+limitations. Distinguish component/installer `0.4.5` from the unchanged `0.4.4`
+native DLL/action manifest. Never claim gameplay or native Windows validation
+that was not actually run.
 
-Finally, download the three draft assets into a new empty directory and run
-`sha256sum --check --strict SHA256SUMS` there. Inspect the component ZIP against
-its exact standalone member table and inspect the source ZIP for the exact fixed
-prefix and tag contents. Confirm that no Valve, Sony, Flower/game, toolchain,
-test, or working-directory binary slipped into either archive. Publish only
-after that independent downloaded-asset verification passes.
+Finally, download both uploaded assets into a new empty directory and run
+`sha256sum --check --strict SHA256SUMS` there. Inspect the bundle against its exact
+member table and confirm that no Valve, Sony, Flower/game, toolchain, test, or
+working-directory binary slipped into it. Publish only after that independent
+downloaded-asset verification and second-maintainer review pass. Passing CI or
+packaging is not publication approval: no publishing workflow may bypass the
+history-sanitation gate, release transcript, manual review, or downloaded-asset
+verification.

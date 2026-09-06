@@ -16,18 +16,23 @@ from urllib.parse import unquote, urlsplit
 from tools import build_release
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-HAY_BALE_ARCHIVE = "flower-hay-bale-fix-1.0.0.zip"
-BRIDGE_ARCHIVE = "flower-native-scepad-bridge-0.4.4.zip"
+BUNDLE_ARCHIVE = "flower-steam-fixes-1.2.0.zip"
 EXPECTED_SOURCE_MEMBERS = {
-    HAY_BALE_ARCHIVE: (
+    BUNDLE_ARCHIVE: (
+        ("GYRO_BRIDGE.md", "GYRO_BRIDGE.md"),
+        ("HAY_BALE_FIX.md", "HAY_BALE_FIX.md"),
+        ("INSTALL_GYRO_BRIDGE_LINUX.sh", "INSTALL_GYRO_BRIDGE_LINUX.sh"),
+        ("INSTALL_GYRO_BRIDGE_WINDOWS.cmd", "INSTALL_GYRO_BRIDGE_WINDOWS.cmd"),
+        ("INSTALL_HAY_BALE_LINUX.sh", "INSTALL_HAY_BALE_LINUX.sh"),
+        ("INSTALL_HAY_BALE_WINDOWS.cmd", "INSTALL_HAY_BALE_WINDOWS.cmd"),
         ("LICENSE", "LICENSE"),
-        ("README.md", "docs/HAY_BALE_RELEASE.md"),
-        ("flower_haybale_fix.py", "flower_haybale_fix.py"),
-    ),
-    BRIDGE_ARCHIVE: (
-        ("LICENSE", "LICENSE"),
-        ("README.md", "docs/BRIDGE_RELEASE.md"),
+        ("README.md", "BUNDLE_README.md"),
+        ("REVERT_GYRO_BRIDGE_LINUX.sh", "REVERT_GYRO_BRIDGE_LINUX.sh"),
+        ("REVERT_GYRO_BRIDGE_WINDOWS.cmd", "REVERT_GYRO_BRIDGE_WINDOWS.cmd"),
+        ("REVERT_HAY_BALE_LINUX.sh", "REVERT_HAY_BALE_LINUX.sh"),
+        ("REVERT_HAY_BALE_WINDOWS.cmd", "REVERT_HAY_BALE_WINDOWS.cmd"),
         ("THIRD_PARTY_NOTICES.md", "THIRD_PARTY_NOTICES.md"),
+        ("flower_haybale_fix.py", "flower_haybale_fix.py"),
         ("gyro_bridge/build.py", "gyro_bridge/build.py"),
         ("gyro_bridge/dist/libScePad.dll", "gyro_bridge/dist/libScePad.dll"),
         (
@@ -71,33 +76,6 @@ PYTHON_SCRIPT: re.Pattern[str] = re.compile(
     r"(?<![A-Za-z0-9_.\\/-])((?:\.?[\\/])?[A-Za-z0-9_.-]+(?:[\\/][A-Za-z0-9_.-]+)*\.py)\b"
 )
 
-FALLBACK_HAY_README = b"""# Flower hay-bale sound fix 1.0.0
-
-See the [project license](LICENSE).
-
-```sh
-python3 flower_haybale_fix.py status
-python3 flower_haybale_fix.py install --dry-run
-```
-"""
-FALLBACK_BRIDGE_README = b"""# Flower native ScePad bridge 0.4.4
-
-See the [project license](LICENSE),
-[third-party notices](THIRD_PARTY_NOTICES.md),
-[LLVM terms](licenses/LLVM.txt), and
-[MinGW-w64 runtime terms](licenses/MINGW-W64-RUNTIME.txt).
-The [installer](gyro_bridge/install_gyro_bridge.py),
-[build script](gyro_bridge/build.py),
-[native source](gyro_bridge/src/flower_scepad_bridge.cpp), and
-[action manifest](gyro_bridge/steam_input/game_actions_966330.vdf) are included.
-
-```sh
-python3 gyro_bridge/install_gyro_bridge.py status
-python3 gyro_bridge/install_gyro_bridge.py install --dry-run
-python3 gyro_bridge/build.py
-```
-"""
-
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
@@ -118,10 +96,6 @@ def run_git(
 def commit_blob(project_root: Path, path: str, ref: str = "HEAD") -> bytes:
     return run_git(project_root, "show", f"{ref}:{path}").stdout
 
-
-def project_head_blob(path: str) -> bytes | None:
-    result = run_git(PROJECT_ROOT, "show", f"HEAD:{path}", check=False)
-    return result.stdout if result.returncode == 0 else None
 
 
 def commit_all(project_root: Path, message: str) -> str:
@@ -148,34 +122,13 @@ def create_committed_repository(project_root: Path) -> str:
         for mappings in EXPECTED_SOURCE_MEMBERS.values()
         for _archive_path, source_path in mappings
     }
-    fallback_docs = {
-        "docs/HAY_BALE_RELEASE.md": FALLBACK_HAY_README,
-        "docs/BRIDGE_RELEASE.md": FALLBACK_BRIDGE_README,
-    }
+    # Commit current inputs to an isolated fixture so tests cover uncommitted edits
+    # without weakening the production builder's clean-checkout/Git-object policy.
     for relative_path in sorted(source_paths):
-        data = project_head_blob(relative_path)
-        working_source = PROJECT_ROOT / relative_path
-        if (
-            data is None
-            and relative_path in fallback_docs
-            and working_source.is_file()
-        ):
-            data = working_source.read_bytes()
-        if data is None:
-            data = fallback_docs.get(
-                relative_path,
-                f"fixture for {relative_path}\n".encode(),
-            )
+        data = (PROJECT_ROOT / relative_path).read_bytes()
         destination = project_root / relative_path
         destination.parent.mkdir(parents=True, exist_ok=True)
         _ = destination.write_bytes(data)
-
-    for pinned_path in (
-        "gyro_bridge/dist/libScePad.dll",
-        "gyro_bridge/steam_input/game_actions_966330.vdf",
-    ):
-        if project_head_blob(pinned_path) is None:
-            raise AssertionError(f"project HEAD is missing pinned fixture {pinned_path}")
 
     tool_destination = project_root / "tools" / "build_release.py"
     tool_destination.parent.mkdir(parents=True, exist_ok=True)
@@ -243,9 +196,10 @@ def documented_python_targets(readme: str) -> tuple[str, ...]:
 def assert_archive_closure(
     testcase: unittest.TestCase,
     archive: zipfile.ZipFile,
+    guide: str,
 ) -> None:
     members = set(archive.namelist())
-    readme = archive.read("README.md").decode("utf-8")
+    readme = archive.read(guide).decode("utf-8")
     links = relative_markdown_targets(readme)
     testcase.assertTrue(links, "README must contain relative Markdown links")
     for target in links:
@@ -288,7 +242,7 @@ class ReleaseArchiveTests(CommittedRepositoryTestCase):
             component="all",
             project_root=self.repository,
         )
-        assert_manifest(self, output, (HAY_BALE_ARCHIVE, BRIDGE_ARCHIVE))
+        assert_manifest(self, output, (BUNDLE_ARCHIVE,))
 
         for archive_name, mappings in EXPECTED_SOURCE_MEMBERS.items():
             with (
@@ -302,24 +256,21 @@ class ReleaseArchiveTests(CommittedRepositoryTestCase):
                         archive.read(archive_path),
                         commit_blob(self.repository, source_path, self.head_commit),
                     )
-                self.assertNotIn("docs/HAY_BALE_RELEASE.md", archive.namelist())
-                self.assertNotIn("docs/BRIDGE_RELEASE.md", archive.namelist())
+                self.assertNotIn("BUNDLE_README.md", archive.namelist())
 
-    def test_per_component_archives_and_manifests(self) -> None:
-        cases = (
-            ("hay-bale", (HAY_BALE_ARCHIVE,)),
-            ("bridge", (BRIDGE_ARCHIVE,)),
-            ("all", (HAY_BALE_ARCHIVE, BRIDGE_ARCHIVE)),
-        )
-        for component, archive_names in cases:
-            with self.subTest(component=component):
-                output = self.output_path(f"release-{component}")
+    def test_component_only_requests_are_refused(self) -> None:
+        for component in ("hay-bale", "bridge"):
+            with (
+                self.subTest(component=component),
+                self.assertRaisesRegex(
+                    build_release.ReleasePolicyError, "unknown release component"
+                ),
+            ):
                 _ = build_release.build_releases(
-                    output,
+                    self.output_path(f"release-{component}"),
                     component=component,
                     project_root=self.repository,
                 )
-                assert_manifest(self, output, archive_names)
 
     def test_archive_bytes_are_deterministic(self) -> None:
         first = self.output_path("first")
@@ -336,7 +287,7 @@ class ReleaseArchiveTests(CommittedRepositoryTestCase):
             ref="HEAD",
             project_root=self.repository,
         )
-        for name in (HAY_BALE_ARCHIVE, BRIDGE_ARCHIVE, "SHA256SUMS"):
+        for name in (BUNDLE_ARCHIVE, "SHA256SUMS"):
             with self.subTest(path=name):
                 self.assertEqual((first / name).read_bytes(), (second / name).read_bytes())
 
@@ -347,19 +298,23 @@ class ReleaseArchiveTests(CommittedRepositoryTestCase):
             component="all",
             project_root=self.repository,
         )
-        for archive_name in (HAY_BALE_ARCHIVE, BRIDGE_ARCHIVE):
-            with zipfile.ZipFile(output / archive_name) as archive:
-                for info in archive.infolist():
-                    self.assertEqual(info.date_time, build_release.FIXED_ZIP_TIMESTAMP)
-                    self.assertEqual(info.compress_type, zipfile.ZIP_STORED)
-                    self.assertEqual(info.create_system, 3)
-                    self.assertEqual(info.create_version, 20)
-                    self.assertEqual(info.extract_version, 20)
-                    self.assertEqual(info.flag_bits, 0)
-                    self.assertEqual(info.internal_attr, 0)
-                    self.assertEqual(info.external_attr >> 16, stat.S_IFREG | 0o644)
-                    self.assertEqual(info.extra, b"")
-                    self.assertEqual(info.comment, b"")
+        with zipfile.ZipFile(output / BUNDLE_ARCHIVE) as archive:
+            for info in archive.infolist():
+                self.assertEqual(info.date_time, build_release.FIXED_ZIP_TIMESTAMP)
+                self.assertEqual(info.compress_type, zipfile.ZIP_STORED)
+                self.assertEqual(info.create_system, 3)
+                self.assertEqual(info.create_version, 20)
+                self.assertEqual(info.extract_version, 20)
+                self.assertEqual(info.flag_bits, 0)
+                self.assertEqual(info.internal_attr, 0)
+                expected_mode = (
+                    stat.S_IFREG | 0o755
+                    if info.filename.endswith(".sh")
+                    else stat.S_IFREG | 0o644
+                )
+                self.assertEqual(info.external_attr >> 16, expected_mode)
+                self.assertEqual(info.extra, b"")
+                self.assertEqual(info.comment, b"")
 
     def test_readme_links_and_documented_commands_are_closed(self) -> None:
         output = self.output_path("closure")
@@ -368,12 +323,48 @@ class ReleaseArchiveTests(CommittedRepositoryTestCase):
             component="all",
             project_root=self.repository,
         )
-        for archive_name in (HAY_BALE_ARCHIVE, BRIDGE_ARCHIVE):
-            with (
-                self.subTest(archive=archive_name),
-                zipfile.ZipFile(output / archive_name) as archive,
-            ):
-                assert_archive_closure(self, archive)
+        with zipfile.ZipFile(output / BUNDLE_ARCHIVE) as archive:
+            for guide in ("README.md", "HAY_BALE_FIX.md", "GYRO_BRIDGE.md"):
+                with self.subTest(guide=guide):
+                    assert_archive_closure(self, archive, guide)
+
+    @unittest.skipUnless(os.name == "posix", "Linux launchers need a POSIX shell")
+    def test_extracted_launchers_find_the_bundled_installers(self) -> None:
+        output = self.output_path("launcher-release")
+        _ = build_release.build_releases(output, project_root=self.repository)
+        extracted = self.root / "extracted bundle with spaces"
+        with zipfile.ZipFile(output / BUNDLE_ARCHIVE) as archive:
+            archive.extractall(extracted)
+            launchers = [
+                info for info in archive.infolist() if info.filename.endswith(".sh")
+            ]
+        environment = os.environ.copy()
+        environment["FLOWER_FIX_IN_TERMINAL"] = "1"
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
+        for info in launchers:
+            with self.subTest(launcher=info.filename):
+                launcher = extracted / info.filename
+                # zipfile.extractall does not restore Unix permission metadata.
+                launcher.chmod(stat.S_IMODE(info.external_attr >> 16))
+                result = subprocess.run(
+                    [os.fspath(launcher), "--help"],
+                    cwd=self.root,
+                    env=environment,
+                    stdin=subprocess.DEVNULL,
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=15,
+                )
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(result.stderr, "")
+                self.assertIn("--game-dir", result.stdout)
+                self.assertIn("Press Enter to close...", result.stdout)
+
+    def test_bundle_version_matches_project_metadata(self) -> None:
+        metadata = (PROJECT_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn(f'version = "{build_release.BUNDLE_VERSION}"', metadata)
+        self.assertEqual(build_release.BUNDLE_RELEASE.archive_name, BUNDLE_ARCHIVE)
 
     def test_no_forbidden_proprietary_file_classes_are_packaged(self) -> None:
         allowed_dll = "gyro_bridge/dist/libScePad.dll"
@@ -383,27 +374,25 @@ class ReleaseArchiveTests(CommittedRepositoryTestCase):
             "steam_api.dll",
             "steam_api64.dll",
         }
-        for archive_name in (HAY_BALE_ARCHIVE, BRIDGE_ARCHIVE):
-            for member in expected_members(archive_name):
-                with self.subTest(archive=archive_name, member=member):
-                    path = PurePosixPath(member)
-                    self.assertNotIn(path.name.casefold(), forbidden_basenames)
-                    suffix = path.suffix.casefold()
-                    if suffix == ".dll":
-                        self.assertEqual(member, allowed_dll)
-                    else:
-                        self.assertNotIn(suffix, FORBIDDEN_PROPRIETARY_SUFFIXES)
+        for member in expected_members(BUNDLE_ARCHIVE):
+            with self.subTest(member=member):
+                path = PurePosixPath(member)
+                self.assertNotIn(path.name.casefold(), forbidden_basenames)
+                suffix = path.suffix.casefold()
+                if suffix == ".dll":
+                    self.assertEqual(member, allowed_dll)
+                else:
+                    self.assertNotIn(suffix, FORBIDDEN_PROPRIETARY_SUFFIXES)
 
     def test_explicit_tag_resolving_to_head_is_accepted(self) -> None:
         _ = run_git(self.repository, "tag", "release-candidate")
         output = self.output_path("tagged")
         _ = build_release.build_releases(
             output,
-            component="hay-bale",
             ref="release-candidate",
             project_root=self.repository,
         )
-        assert_manifest(self, output, (HAY_BALE_ARCHIVE,))
+        assert_manifest(self, output, (BUNDLE_ARCHIVE,))
 
 
 class ReleasePolicyTests(CommittedRepositoryTestCase):
@@ -413,7 +402,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "staged changes"):
             _ = build_release.build_releases(
                 self.output_path("staged"),
-                component="hay-bale",
                 project_root=self.repository,
             )
 
@@ -422,7 +410,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "unstaged changes"):
             _ = build_release.build_releases(
                 self.output_path("unstaged"),
-                component="hay-bale",
                 project_root=self.repository,
             )
 
@@ -431,7 +418,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "untracked files"):
             _ = build_release.build_releases(
                 self.output_path("untracked"),
-                component="hay-bale",
                 project_root=self.repository,
             )
 
@@ -442,7 +428,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "no HEAD commit"):
             _ = build_release.build_releases(
                 self.output_path("no-commit-output"),
-                component="hay-bale",
                 project_root=repository,
             )
 
@@ -454,7 +439,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "not HEAD"):
             _ = build_release.build_releases(
                 self.output_path("old-ref"),
-                component="hay-bale",
                 ref=old_commit,
                 project_root=self.repository,
             )
@@ -466,7 +450,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "stale entries"):
             _ = build_release.build_releases(
                 output,
-                component="hay-bale",
                 project_root=self.repository,
             )
         self.assertEqual((output / "old.zip").read_bytes(), b"stale")
@@ -476,16 +459,14 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         output.mkdir()
         _ = build_release.build_releases(
             output,
-            component="hay-bale",
             project_root=self.repository,
         )
-        assert_manifest(self, output, (HAY_BALE_ARCHIVE,))
+        assert_manifest(self, output, (BUNDLE_ARCHIVE,))
 
     def test_output_inside_repository_is_refused(self) -> None:
         with self.assertRaisesRegex(build_release.ReleasePolicyError, "external"):
             _ = build_release.build_releases(
                 self.repository / "release-output",
-                component="hay-bale",
                 project_root=self.repository,
             )
 
@@ -499,7 +480,6 @@ class ReleasePolicyTests(CommittedRepositoryTestCase):
         ):
             _ = build_release.build_releases(
                 self.output_path("tampered-bridge"),
-                component="bridge",
                 project_root=self.repository,
             )
 
@@ -518,38 +498,43 @@ class ReleaseCliTests(CommittedRepositoryTestCase):
             text=True,
         )
 
-    def test_cli_requires_output_directory_and_component(self) -> None:
+    def test_cli_requires_only_an_output_directory(self) -> None:
         no_arguments = self.run_cli()
         self.assertEqual(no_arguments.returncode, 2)
         self.assertIn("--output-dir", no_arguments.stderr)
-        self.assertIn("--component", no_arguments.stderr)
 
-        missing_component = self.run_cli(
-            "--output-dir",
-            os.fspath(self.output_path("missing-component")),
-        )
-        self.assertEqual(missing_component.returncode, 2)
-        self.assertIn("--component", missing_component.stderr)
+        output = self.output_path("default-bundle")
+        result = self.run_cli("--output-dir", os.fspath(output))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        assert_manifest(self, output, (BUNDLE_ARCHIVE,))
 
-    def test_cli_builds_only_selected_component(self) -> None:
-        output = self.output_path("cli-bridge")
+    def test_cli_legacy_all_selector_still_builds_bundle(self) -> None:
+        output = self.output_path("legacy-selector")
         result = self.run_cli(
             "--output-dir",
             os.fspath(output),
             "--component",
-            "bridge",
+            "all",
             "--ref",
             "HEAD",
         )
         self.assertEqual(result.returncode, 0, result.stderr)
-        assert_manifest(self, output, (BRIDGE_ARCHIVE,))
+        assert_manifest(self, output, (BUNDLE_ARCHIVE,))
+
+    def test_cli_refuses_component_only_selectors(self) -> None:
+        for component in ("hay-bale", "bridge"):
+            with self.subTest(component=component):
+                output = self.output_path(f"unsupported-{component}")
+                result = self.run_cli(
+                    "--output-dir", os.fspath(output), "--component", component
+                )
+                self.assertEqual(result.returncode, 2)
+                self.assertFalse(output.exists())
 
     def test_cli_refuses_repository_internal_output(self) -> None:
         result = self.run_cli(
             "--output-dir",
             os.fspath(self.repository / "release-output"),
-            "--component",
-            "hay-bale",
         )
         self.assertEqual(result.returncode, 1)
         self.assertIn("external", result.stderr)

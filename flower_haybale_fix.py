@@ -23,7 +23,7 @@ APP_ID = 966330
 SUPPORTED_BUILD_ID = 4354278
 TARGET_RELATIVE_PATH = Path("Data") / "Sounds" / "Level4_A.bnk"
 BACKUP_SUFFIX = ".flower-haybale-fix.original"
-SCRIPT_VERSION = "1.0.0"
+SCRIPT_VERSION = "1.0.1"
 
 
 class PatchError(RuntimeError):
@@ -497,35 +497,16 @@ def main(argv: list[str] | None = None) -> int:
             print_status(target)
             return 0
         if args.command == "install":
-            result = install_patch(target, dry_run=args.dry_run)
-            print_status(target)
-            if result.state == "dry-run-installable":
-                print(
-                    "Dry run passed: content and precondition checks succeeded. "
-                    + "No write or replacement was attempted."
-                )
-            elif result.state == "already-patched":
-                print("Fix is already installed; no files were changed.")
-            else:
-                print("Fix installed successfully.")
-                print(
-                    "Note: the bad landing sting is replaced with a duplicate of a "
-                    + "known-good hay transformation sound because the missing fifth "
-                    + "recording is not present in this Steam build."
-                )
+            _ = install_patch(target, dry_run=args.dry_run)
+            print("Dry run successful; no changes made." if args.dry_run else "Success.")
             return 0
 
-        result = restore_patch(target, dry_run=args.dry_run)
-        print_status(target)
-        if result.state == "dry-run-restorable":
-            print(
-                "Dry run passed: content and precondition checks succeeded. "
-                + "No write or replacement was attempted."
-            )
-        elif result.state == "already-original":
-            print("Original bank is already active; no files were changed.")
-        else:
-            print("Original bank restored successfully.")
+        _ = restore_patch(target, dry_run=args.dry_run)
+        print(
+            "Dry run successful; no changes made."
+            if args.dry_run
+            else "Fix reverted."
+        )
         return 0
     except (OSError, PatchError) as error:
         print(f"ERROR: {error}", file=sys.stderr)

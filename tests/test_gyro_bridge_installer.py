@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import os
 import tempfile
 import unittest
+from contextlib import redirect_stdout
 from pathlib import Path
 from unittest import mock
 
@@ -746,6 +748,70 @@ class GyroBridgeInstallerTests(unittest.TestCase):
         self.assertEqual(resolve_game_directory(self.game), self.game)
         self.assertEqual(resolve_game_directory(self.target), self.game)
         self.assertEqual(resolve_steam_directory(self.steam_root), self.steam_root)
+
+    def test_main_prints_concise_operation_results(self) -> None:
+        cases = (
+            (["install"], "install_bridge_and_manifest", "Success.\n", False),
+            (["restore"], "restore_bridge_and_manifest", "Fix reverted.\n", False),
+            (
+                ["install", "--dry-run"],
+                "install_bridge_and_manifest",
+                "Dry run successful; no changes made.\n",
+                True,
+            ),
+            (
+                ["restore", "--dry-run"],
+                "restore_bridge_and_manifest",
+                "Dry run successful; no changes made.\n",
+                True,
+            ),
+        )
+
+        for argv, operation_name, expected_output, dry_run in cases:
+            with self.subTest(argv=argv):
+                output = io.StringIO()
+                with (
+                    mock.patch.object(
+                        installer,
+                        "resolve_game_directory",
+                        return_value=self.game,
+                    ),
+                    mock.patch.object(
+                        installer,
+                        "resolve_steam_directory",
+                        return_value=self.steam_root,
+                    ),
+                    mock.patch.object(
+                        installer,
+                        "resolve_bridge_artifact",
+                        return_value=self.artifact,
+                    ),
+                    mock.patch.object(
+                        installer,
+                        "resolve_manifest_artifact",
+                        return_value=self.manifest_artifact,
+                    ),
+                    mock.patch.object(installer, operation_name) as operation,
+                    redirect_stdout(output),
+                ):
+                    exit_code = installer.main(argv)
+
+                self.assertEqual(exit_code, 0)
+                self.assertEqual(output.getvalue(), expected_output)
+                if argv[0] == "install":
+                    operation.assert_called_once_with(
+                        self.game,
+                        self.artifact,
+                        self.steam_root,
+                        self.manifest_artifact,
+                        dry_run=dry_run,
+                    )
+                else:
+                    operation.assert_called_once_with(
+                        self.game,
+                        self.steam_root,
+                        dry_run=dry_run,
+                    )
 
 
 class BridgeReleaseTests(unittest.TestCase):

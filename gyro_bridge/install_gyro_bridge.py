@@ -21,7 +21,7 @@ from typing import Protocol, cast
 
 APP_ID = 966330
 SUPPORTED_BUILD_ID = 4354278
-SCRIPT_VERSION = "0.4.4"
+SCRIPT_VERSION = "0.4.5"
 TARGET_NAME = "libScePad.dll"
 BACKUP_NAME = "libScePad_original.dll"
 FLOWER_EXE_NAME = "Flower.exe"
@@ -1223,52 +1223,26 @@ def main(argv: list[str] | None = None) -> int:
             return 0
 
         if args.command == "install":
-            bridge_result, manifest_result = install_bridge_and_manifest(
+            _ = install_bridge_and_manifest(
                 game_dir,
                 artifact,
                 steam_dir,
                 manifest_artifact,
                 dry_run=args.dry_run,
             )
-            if args.dry_run:
-                print_status(game_dir, artifact, steam_dir, manifest_artifact)
-                print(
-                    "Dry run passed for the bridge and action manifest; "
-                    + "no files were written or replaced."
-                )
-                print(f"Bridge preflight: {bridge_result.state}")
-                print(f"Manifest preflight: {manifest_result.state}")
-                return 0
-
-            print_status(game_dir, artifact, steam_dir, manifest_artifact)
-            print(f"Bridge result: {bridge_result.state}")
-            print(f"Action manifest result: {manifest_result.state}")
-            print(
-                "Installation complete. Fully exit and restart Steam before "
-                + "creating or applying a named-action controller layout."
-            )
+            print("Dry run successful; no changes made." if args.dry_run else "Success.")
             return 0
 
-        bridge_result, manifest_result = restore_bridge_and_manifest(
+        _ = restore_bridge_and_manifest(
             game_dir,
             steam_dir,
             dry_run=args.dry_run,
         )
-        if args.dry_run:
-            print_status(game_dir, artifact, steam_dir, manifest_artifact)
-            print(
-                "Dry run passed for bridge restoration and managed-manifest "
-                + "removal; no files were changed."
-            )
-            print(f"Bridge preflight: {bridge_result.state}")
-            print(f"Manifest preflight: {manifest_result.state}")
-            return 0
-
-        print_status(game_dir, artifact, steam_dir, manifest_artifact)
-        print(f"Bridge result: {bridge_result.state}")
-        print(f"Action manifest result: {manifest_result.state}")
-        if manifest_result.changed:
-            print("Fully exit and restart Steam to clear the removed action manifest.")
+        print(
+            "Dry run successful; no changes made."
+            if args.dry_run
+            else "Fix reverted."
+        )
         return 0
     except (OSError, BridgeError) as error:
         print(f"ERROR: {error}", file=sys.stderr)

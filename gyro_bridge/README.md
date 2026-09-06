@@ -5,6 +5,11 @@ the native ScePad path used by the Steam release of **Flower**. It exposes a
 Flower-specific raw virtual PS4 controller surface. The action names represent
 PS4 controls directly rather than semantic gameplay commands.
 
+Component/installer `0.4.5` is included in bundle `1.2.0` (`v1.2.0`). The DLL and
+action manifest remain the byte-identical native `0.4.4` artifacts with unchanged
+exact sizes and hashes.
+Existing native validation is not a new gameplay or Windows pass for this bundle.
+
 Adapter mode is designed for Steam Deck, DualShock 4, DualSense, Steam
 Controller, Switch controllers, and other devices exposed by Steam Input. A
 physical motion sensor is needed only for motion steering. Informal gameplay has
@@ -17,23 +22,32 @@ byte-exact; see [Exact files and hashes](#exact-files-and-hashes).
 
 ## Quick start
 
-Close Flower. From the extracted release or repository root on SteamOS/Linux,
-install with one command:
+Download `flower-steam-fixes-1.2.0.zip` and `SHA256SUMS`, verify the ZIP, and
+extract the whole bundle. The root user guide is
+[`GYRO_BRIDGE.md`](../GYRO_BRIDGE.md).
+
+Close Flower. From the extracted bundle or repository root on SteamOS/Linux,
+double-click [`INSTALL_GYRO_BRIDGE_LINUX.sh`](../INSTALL_GYRO_BRIDGE_LINUX.sh).
+The equivalent direct command is:
 
 ```sh
 python3 gyro_bridge/install_gyro_bridge.py install
 ```
 
-On Windows PowerShell, use `py -3.10` in place of `python3`. Native Windows is
-not yet a validated support target. Never bypass an `unsupported`, `unsafe`,
-backup, or artifact refusal.
+On Windows, the root launchers are
+[`INSTALL_GYRO_BRIDGE_WINDOWS.cmd`](../INSTALL_GYRO_BRIDGE_WINDOWS.cmd) and
+[`REVERT_GYRO_BRIDGE_WINDOWS.cmd`](../REVERT_GYRO_BRIDGE_WINDOWS.cmd). For direct
+PowerShell commands, use `py -3` in place of `python3` with Python 3.10 or newer.
+Native Windows is not yet a validated support target. Never bypass an
+`unsupported`, `unsafe`, backup, or artifact refusal.
 
 After a successful install, fully exit and restart Steam, explicitly select or
 create a **Flower Virtual PS4 Controller** layout, and follow
 [Restart Steam and select a layout](#restart-steam-and-select-a-layout). The
 installer does not create or select an account-owned layout.
 
-To remove the bridge safely, close Flower and run:
+To remove the bridge safely, close Flower and double-click
+[`REVERT_GYRO_BRIDGE_LINUX.sh`](../REVERT_GYRO_BRIDGE_LINUX.sh), or run:
 
 ```sh
 python3 gyro_bridge/install_gyro_bridge.py restore
@@ -200,8 +214,8 @@ Close Flower first. From the repository root:
 python3 gyro_bridge/install_gyro_bridge.py install
 ```
 
-On Windows PowerShell, run the same commands with `py -3.10` instead of
-`python3`. Native Windows remains unverified; reports must not be generalized
+On Windows PowerShell, run the same commands with `py -3` instead of
+`python3` (Python 3.10 or newer). Native Windows remains unverified; reports must not be generalized
 into confirmed support.
 
 For nonstandard locations:
@@ -228,6 +242,10 @@ Installation is fail-closed and reversible:
 - Restore removes the managed action file before reinstating the verified
   original DLL, so an interrupted restore leaves the proxy fail-open. Unknown
   files and account-owned profiles are never deleted.
+
+Per-file atomic replacement and coordinated rollback are not an all-or-nothing
+transaction. An error, interruption, or unsuccessful rollback can leave partial
+state; preserve verified backups and inspect `status` before retrying.
 
 Python 3.10 or newer is required. No third-party Python packages are needed.
 
@@ -339,6 +357,9 @@ if desired.
 
 ### Current installer-managed `0.4.4` artifacts
 
+Component/installer `0.4.5` continues to manage these unchanged native `0.4.4`
+artifacts. The installer version bump does not change their identity or hashes.
+
 | File | Bytes | SHA-256 |
 |---|---:|---|
 | `gyro_bridge/dist/libScePad.dll` | 84,992 | `adca347f5f51c88907e0915b7920436a0dae96aa6ca621ece807bcd96b648f6c` |
@@ -346,7 +367,7 @@ if desired.
 
 ### Installer-managed historical artifacts
 
-Installer `0.4.4` recognizes these exact prior generations for safe upgrade or
+Installer `0.4.5` recognizes these exact prior generations for safe upgrade or
 restore handling:
 
 | Artifact | Bytes | SHA-256 |
@@ -361,8 +382,10 @@ restore handling:
 | Historical four-action file | 860 | `2dce857f62c7d163f46d425cbb6bee01bfa523ae4d29663641b1040900dbf89a` |
 | Historical semantic action file | 1,120 | `54b331f130e23654f7233eb19f5a7397e749d4f19089e39b2209ff5435c71623` |
 
-Never relax these checks to force an installation. A new release must update the
-allowlist intentionally, regenerate tests, and verify the exact artifacts first.
+Never relax these checks to force an installation. Only an intentional artifact
+or compatibility change may update an allowlist, with matching tests and exact
+artifact verification. Installer-only or bundle-only version bumps must preserve
+unchanged native fingerprints.
 
 ## Build and test
 
@@ -374,11 +397,15 @@ The exact archive URL, SHA-256, compiler identity, and release process are in
 ```sh
 python3 gyro_bridge/build.py --verify-release
 python3 gyro_bridge/test.py
+python3 gyro_bridge/build.py --verify-release
 python3 -m unittest discover -s tests -v
 ```
 
 `--verify-release` requires the pinned Clang identity and exact production DLL
-hash. The default build remains available for development after intentional
+hash. Every bundle release includes the DLL and requires pinned verification and
+the isolated Proton smoke matrix, even when native artifacts are unchanged. Run
+`--verify-release` again after the smoke matrix to restore and verify the release
+artifact. The default build remains available for development after intentional
 source changes.
 
 `gyro_bridge/test.py` uses only a dedicated prefix under

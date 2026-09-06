@@ -47,10 +47,10 @@ jobs:
           python -m unittest discover -s tests
           -p 'test_release_packaging.py' -v
 
-      - name: Build deterministic release packages
+      - name: Build the deterministic release bundle
         run: >-
           python tools/build_release.py
-          --component all --ref HEAD
+          --ref HEAD
           --output-dir "${RUNNER_TEMP}/flower-releases"
 
       - name: Verify tracked-tree cleanliness

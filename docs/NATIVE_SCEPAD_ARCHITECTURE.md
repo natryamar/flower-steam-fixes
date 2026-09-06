@@ -256,6 +256,10 @@ Installation is never automatic. An explicit installer command must:
    state and verified original DLL when neither path changed concurrently.
 6. Refuse unknown, linked, modified, or concurrently changing files.
 
+Atomicity is per file, not across the whole operation. An error, interruption, or
+rollback that cannot proceed safely can leave partial state. Preserve verified
+backups and inspect installer `status` before attempting recovery.
+
 Restore is equally explicit. It reinstates only the verified original ScePad DLL
 and removes only an exact project-managed action file. It does not rewrite
 `Flower.cfg` and must not alter account-owned Steam profiles.
@@ -270,7 +274,9 @@ and removes only an exact project-managed action file. It does not rewrite
 | Current `0.4.4` angle-tilt proxy artifact | 84,992 | `adca347f5f51c88907e0915b7920436a0dae96aa6ca621ece807bcd96b648f6c` |
 | Current `0.4.4` raw-surface action file | 2,438 | `8d3f5ab9b5a321ab3f6162935a8810642b08c307780a6356d75c102e8ce64b13` |
 
-Installer `0.4.4` allowlists those exact current artifacts. Prior semantic and
+Component/installer `0.4.5` in bundle `1.2.0` allowlists these unchanged native
+`0.4.4` artifacts. The DLL and action file retain their exact sizes and hashes;
+the installer version bump is not a native rebuild. Prior semantic and
 experimental managed generations remain historical signatures so upgrade and
 restore operations can identify them safely. The complete historical table is in
 [`gyro_bridge/README.md`](../gyro_bridge/README.md).
